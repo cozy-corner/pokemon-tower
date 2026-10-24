@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,6 +7,7 @@ const INDEX_URL = "https://pokemondb.net/sprites";
 const IMAGE_URL = "https://img.pokemondb.net/sprites/home/normal/1x";
 const HEADERS = { "User-Agent": "Mozilla/5.0" };
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const NAMES_PATH = "data/names.json";
 const DELAY_MS = 100;
 
 export function parseNames(html: string): string[] {
@@ -15,6 +16,15 @@ export function parseNames(html: string): string[] {
 		names.add(m[1]);
 	}
 	return [...names].sort();
+}
+
+// Pokemon lists only grow; a shorter or empty result means the page layout changed or the fetch was bad.
+export function assertNotShrinking(existing: string[], next: string[]): void {
+	if (next.length === 0 || next.length < existing.length) {
+		throw new Error(
+			`refusing to overwrite names: ${existing.length} -> ${next.length}`,
+		);
+	}
 }
 
 export async function fetchSprites(
@@ -57,8 +67,11 @@ async function main(): Promise<void> {
 	const res = await fetch(INDEX_URL, { headers: HEADERS });
 	if (!res.ok) throw new Error(`index page: HTTP ${res.status}`);
 	const names = parseNames(await res.text());
+	if (existsSync(NAMES_PATH)) {
+		assertNotShrinking(JSON.parse(await readFile(NAMES_PATH, "utf8")), names);
+	}
 	await mkdir("data", { recursive: true });
-	await writeFile("data/names.json", `${JSON.stringify(names, null, "\t")}\n`);
+	await writeFile(NAMES_PATH, `${JSON.stringify(names, null, "\t")}\n`);
 	const { ok, failed } = await fetchSprites(names, "public/sprites");
 	console.log(`ok: ${ok.length}, failed: ${failed.length}`);
 	if (failed.length > 0) {
