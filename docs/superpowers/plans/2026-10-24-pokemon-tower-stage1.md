@@ -6,7 +6,7 @@
 
 **Architecture:** スプライトのアルファ値から外側の輪郭を取り、凸多角形に分けて Planck.js の剛体にする。輪郭の計算は事前にスクリプトで全1025種類について行い、`shapes.json` に保存する。ゲームは canvas 2D で描き、ポインター操作で位置と回転を決めて落とす。
 
-**Tech Stack:** TypeScript、bun(パッケージ管理とスクリプト実行。bun 1.3.9 を確認済み)、Vite、Vitest、Biome(lint と format)、Planck.js、pngjs(PNG 読み込み)、GitHub Actions(CI)。
+**Tech Stack:** TypeScript、bun(パッケージ管理とスクリプト実行。バージョンは `mise.toml` で固定する。Vite は中で Node を使うので、Node も固定する)、mise(ツールのバージョン管理。手元と CI で同じ版にそろえる)、Vite、Vitest、Biome(lint と format)、Planck.js、pngjs(PNG 読み込み)、GitHub Actions(CI)。
 
 **Spec:** `docs/superpowers/specs/2026-10-24-pokemon-tower-design.md`
 
@@ -20,7 +20,7 @@
 - ひとり用は落ちても終わらない。積めた数と高さを記録する。落とすポケモンはランダム。入れ替えボタンは作らない。
 - 「勝手に崩れない」の基準: 何も触らずに30秒置いて動かない。満たせなければ別の物理エンジンを検討する。
 - commit は Conventional Commits の件名のみ(本文なし)。タスクごとに1 commit。末尾に `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` を付ける。
-- パッケージ管理とスクリプト実行は bun。`npm` は使わない。commit の前に `bun run check` が通ること。
+- パッケージ管理とスクリプト実行は bun。`npm` は使わない。bun と Node のバージョンは `mise.toml` で固定し、手元も CI も mise で同じ版を入れる。マシンに入っているものに頼らない。commit の前に `bun run check` が通ること。
 - 実装を始める前に `branch-workflow` スキルを呼ぶ(`superpowers:using-git-worktrees` ではなく)。
 
 ## PR の分け方
@@ -49,7 +49,7 @@
 ### Task 1: 土台
 
 **Files:**
-- Create: `package.json`、`bun.lock`、`tsconfig.json`、`vite.config.ts`、`index.html`、`src/main.ts`、`.gitignore`、`biome.json`、`.github/workflows/ci.yml`、`.github/pull_request_template.md`
+- Create: `package.json`、`bun.lock`、`tsconfig.json`、`vite.config.ts`、`index.html`、`src/main.ts`、`.gitignore`、`biome.json`、`.github/workflows/ci.yml`、`.github/pull_request_template.md`、`mise.toml`
 - Modify: `.githooks/pre-commit`
 
 **Interfaces:**
@@ -60,8 +60,8 @@
 - [ ] **Step 2: `.gitignore` に `node_modules`、`dist`、`public/sprites/` を書く。**
 - [ ] **Step 3: Biome を入れ、`biome.json` に推奨の lint と format を設定する。** 上のスクリプトを `package.json` に書く。`bun run check` は、Biome の検査(`biome ci .`)、`tsc --noEmit`、`vitest run --passWithNoTests` の順に実行して、1つでも失敗したら失敗にする。
 - [ ] **Step 4: `.githooks/pre-commit` に、画像のガードの後、staged のファイルに Biome の検査(`biome check --staged`)をかける。** 画像のガードは今のまま残す。
-- [ ] **Step 5: `.github/workflows/ci.yml` を書く。** `pull_request` と `main` への `push` で動き、bun を入れ、`bun install --frozen-lockfile` のあと、`bun run check` と `bun run build` を実行する。使う Action のバージョンは、各 Action の公式 README で確認して固定する。
-- [ ] **Step 6: `.github/pull_request_template.md` を書く。** 項目は「概要」と、確認の欄(`bun run check` が通る、画像ファイルを含めていない)の2つだけにする。
+- [ ] **Step 5: `.github/workflows/ci.yml` を書く。** `pull_request` と `main` への `push` で動き、`jdx/mise-action` で `mise.toml` の bun と Node を入れ、`bun install --frozen-lockfile` のあと、`bun run check` と `bun run build` を実行する。使う Action のバージョンは、各 Action の公式 README で確認して固定する。
+- [ ] **Step 6: `.github/pull_request_template.md` を書く。** 項目は「概要」と、確認の欄(`bun run check` が通る)の2つだけにする。画像は commit 時のフックが止めるので、項目にしない。
 - [ ] **Step 7: 動作を確認する。**
   - `bun run check` と `bun run build` が通る。
   - 意図的に lint エラーを入れたファイルを staged にして commit すると、フックが止める(確認後に元に戻す)。
