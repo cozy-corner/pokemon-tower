@@ -1,35 +1,98 @@
+import exclusions from "../data/exclusions.json";
+import names from "../data/names.json";
+import { createGame } from "./game/game";
 import type { Vec } from "./geometry/types";
+import { createControls } from "./input/controls";
 import { createWorld } from "./physics/world";
 import { createRenderer } from "./render/renderer";
 
 type Shapes = Record<string, { polygons: Vec[][] }>;
 
-const canvas = document.querySelector<HTMLCanvasElement>("#game");
-if (!canvas) throw new Error("#game missing");
+const STEP_S = 1 / 60;
+// After a long stall (hidden tab) drop the backlog instead of fast-forwarding.
+const MAX_STEPS_PER_FRAME = 5;
+const RECORD_KEY = "pokemon-tower.best";
+
+const el = (id: string) => {
+	const node = document.getElementById(id);
+	if (!node) throw new Error(`#${id} missing`);
+	return node;
+};
+const canvas = el("game") as HTMLCanvasElement;
 const shapes: Shapes = await (await fetch("/shapes.json")).json();
 
-const ids = ["abra", "absol", "abomasnow", "accelgor", "aegislash", "arceus"];
-const sprites = new Map<string, HTMLImageElement>();
-await Promise.all(
-	ids.map(
-		(id) =>
-			new Promise<void>((resolve) => {
-				const img = new Image();
-				img.onload = img.onerror = () => resolve();
-				img.src = `/sprites/${id}.png`;
-				sprites.set(id, img);
-			}),
-	),
-);
+type Best = { count: number; height: number };
+const loadBest = (): Best => {
+	try {
+		const saved = JSON.parse(localStorage.getItem(RECORD_KEY) ?? "null");
+		if (saved) return { count: saved.count ?? 0, height: saved.height ?? 0 };
+	} catch {}
+	return { count: 0, height: 0 };
+};
+const saveBest = (best: Best) => {
+	try {
+		localStorage.setItem(RECORD_KEY, JSON.stringify(best));
+	} catch {}
+};
 
+const sprites = new Map<string, HTMLImageElement>();
 const world = createWorld();
-for (const [i, id] of ids.entries()) {
-	world.addPiece(id, shapes[id].polygons, i % 2 ? 0.4 : -0.4, 0);
-}
+const game = createGame({
+	world,
+	names,
+	excluded: new Set(exclusions),
+	polygonsOf: (name) => shapes[name].polygons,
+	rand: Math.random,
+});
+
+const ensureSprite = (name: string) => {
+	if (sprites.has(name)) return;
+	const img = new Image();
+	img.onerror = () => {
+		sprites.delete(name);
+		game.reportBroken(name);
+	};
+	img.src = `/sprites/${name}.png`;
+	sprites.set(name, img);
+};
+
+const best = loadBest();
+let shown = "";
+const updateHud = () => {
+	const h = game.heightM;
+	if (game.stackedCount > best.count || h > best.height) {
+		best.count = Math.max(best.count, game.stackedCount);
+		best.height = Math.max(best.height, h);
+		saveBest(best);
+	}
+	const key = `${game.stackedCount}/${h.toFixed(1)}`;
+	if (key === shown) return;
+	shown = key;
+	el("count").textContent = String(game.stackedCount);
+	el("height").textContent = h.toFixed(1);
+	el("best-count").textContent = String(best.count);
+	el("best-height").textContent = best.height.toFixed(1);
+};
+
+createControls(canvas, el("rotate"), {
+	onMove: (x) => game.move(x),
+	onRotate: () => game.rotate(),
+	onDrop: () => game.drop(),
+});
+
 const renderer = createRenderer(canvas, sprites);
-const frame = () => {
-	world.step(1 / 60);
-	renderer.draw(world.pieces(), null);
+let last: number | null = null;
+let acc = 0;
+const frame = (now: number) => {
+	acc += last === null ? 0 : (now - last) / 1000;
+	last = now;
+	for (let i = 0; acc >= STEP_S; i++, acc -= STEP_S) {
+		if (i < MAX_STEPS_PER_FRAME) game.step(STEP_S);
+	}
+	if (game.held) ensureSprite(game.held.id);
+	ensureSprite(game.upcoming);
+	updateHud();
+	renderer.draw(game.pieces(), game.held);
 	requestAnimationFrame(frame);
 };
 requestAnimationFrame(frame);

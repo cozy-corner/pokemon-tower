@@ -9,6 +9,19 @@
       body { display: flex; justify-content: center; }
       #stage { position: relative; aspect-ratio: 9 / 16; height: min(100dvh, 100vw * 16 / 9); width: auto; }
       #game { display: block; width: 100%; height: 100%; touch-action: none; }
+      #hud {
+        position: absolute; top: 2%; left: 4%; right: 4%;
+        display: flex; justify-content: space-between; align-items: flex-start;
+        pointer-events: none; user-select: none; -webkit-user-select: none;
+        font-family: system-ui, sans-serif; color: #222;
+      }
+      .stat { display: flex; align-items: center; gap: 6px; }
+      .stat svg { width: 32px; height: 32px; flex: none; }
+      .stat b { font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; }
+      .stat small { font-size: 18px; font-weight: 700; }
+      .best { font-size: 14px; margin-top: 4px; opacity: 0.75; }
+      .end { text-align: right; }
+      .stat.end { justify-content: flex-end; }
       #rotate {
         position: absolute; left: 50%; bottom: 4%; transform: translateX(-50%);
         width: 72px; height: 72px; padding: 0; border: 0; border-radius: 50%;
@@ -23,6 +36,16 @@
   <body>
     <div id="stage">
       <canvas id="game"></canvas>
+      <div id="hud">
+        <div>
+          <div class="stat"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="3" width="10" height="5" rx="1.5"/><rect x="3" y="10" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="5" rx="1.5"/><rect x="5" y="17" width="14" height="4" rx="1.5"/></svg><b id="count">0</b></div>
+          <div class="best">ベスト <span id="best-count">0</span></div>
+        </div>
+        <div class="end">
+          <div class="stat end"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V5"/><path d="M5 11l7-7 7 7"/></svg><b id="height">0.0</b><small>m</small></div>
+          <div class="best">ベスト <span id="best-height">0.0</span> m</div>
+        </div>
+      </div>
       <button id="rotate" type="button" aria-label="回転">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M20 12a8 8 0 1 1-2.5-5.8" />
