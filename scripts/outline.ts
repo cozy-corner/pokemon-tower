@@ -226,7 +226,7 @@ function traceOuter(m: Uint8Array, w: number, h: number, start: Vec): Vec[] {
 /**
  * Simplifies the contour and splits it into convex pieces. If simplification
  * self-intersects or triangulation fails, retries with a smaller tolerance,
- * ending with the exact pixel outline. Returns [] rather than throwing.
+ * ending with the exact pixel outline. Throws if even that fails, so an island never vanishes silently.
  */
 function decomposeContour(contour: Vec[]): Vec[][] {
 	// null = the exact pixel outline, which is always simple.
@@ -245,7 +245,7 @@ function decomposeContour(contour: Vec[]): Vec[][] {
 			if (triangles) return mergeConvex(poly, triangles);
 		}
 	}
-	return [];
+	throw new Error("could not decompose contour");
 }
 
 function simplifyClosed(pts: Vec[], tol: number): Vec[] {
