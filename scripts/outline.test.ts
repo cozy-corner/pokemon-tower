@@ -221,10 +221,10 @@ describe("computeOutline", () => {
 	it("counts separate diagonal lines as separate components", () => {
 		const w = 40;
 		const mask = blankMask(w, 40);
-		const pixels: Vec[] = [];
-		for (let i = 0; i < 30; i++) {
-			pixels.push({ x: i + 2, y: i + 2 }, { x: i + 5, y: i + 2 });
-		}
+		const pixels: Vec[] = Array.from({ length: 30 }, (_, i) => [
+			{ x: i + 2, y: i + 2 },
+			{ x: i + 5, y: i + 2 },
+		]).flat();
 		for (const p of pixels) mask.alpha[p.y * w + p.x] = 255;
 		const { polygons, stats } = computeOutline(mask);
 		expect(stats.components).toBe(2);
