@@ -2,12 +2,12 @@ import {
 	type Body,
 	Box,
 	World as PlanckWorld,
+	Polygon,
 	type PolygonShape,
 	Rot,
 	Vec2,
 } from "planck";
 import type { Vec } from "../geometry/types";
-import { toPlanckShapes } from "./polygons";
 
 // Meters, +y down (same as the sprite images), so gravity is positive y.
 export const GRAVITY = 10;
@@ -106,7 +106,6 @@ export function createWorld({
 		if (entries.has(id)) {
 			throw new Error(`duplicate piece id ${id}`);
 		}
-		const shapes = toPlanckShapes(id, polygons);
 		const rot = new Rot(angle);
 		const lowest = Math.max(
 			...polygons.flat().map((v) => Rot.mulVec2(rot, new Vec2(v.x, v.y)).y),
@@ -116,9 +115,10 @@ export function createWorld({
 			position: new Vec2(x, highestY() - SPAWN_CLEARANCE - lowest),
 			angle,
 		});
-		for (const shape of shapes) {
+		// shapes.json is checked against Planck by shapes-data.test.ts.
+		for (const poly of polygons) {
 			body.createFixture({
-				shape,
+				shape: new Polygon(poly.map((v) => new Vec2(v.x, v.y))),
 				density: DENSITY,
 				friction: FRICTION,
 				restitution: RESTITUTION,
