@@ -25,6 +25,10 @@ describe("parseNames", () => {
 	});
 });
 
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const pngBody = (...rest: number[]) =>
+	new Uint8Array([...PNG_SIGNATURE, ...rest]);
+
 describe("fetchSprites", () => {
 	afterEach(() => {
 		vi.unstubAllGlobals();
@@ -49,7 +53,7 @@ describe("fetchSprites", () => {
 			if (url.endsWith("/missing.png"))
 				return new Response("", { status: 404 });
 			if (url.endsWith("/boom.png")) throw new Error("network");
-			return new Response(new Uint8Array([1, 2, 3]), { status: 200 });
+			return new Response(pngBody(1, 2, 3), { status: 200 });
 		});
 		vi.stubGlobal("fetch", fetchMock);
 		const dir = await tmp();
@@ -61,7 +65,7 @@ describe("fetchSprites", () => {
 
 	it("sends a User-Agent header", async () => {
 		const fetchMock = vi.fn(
-			async () => new Response(new Uint8Array([1]), { status: 200 }),
+			async () => new Response(pngBody(1), { status: 200 }),
 		);
 		vi.stubGlobal("fetch", fetchMock);
 		await fetchSprites(["mew"], await tmp());
@@ -74,13 +78,32 @@ describe("fetchSprites", () => {
 	it("writes the full body to the final path and leaves no .part file", async () => {
 		vi.stubGlobal(
 			"fetch",
-			vi.fn(
-				async () => new Response(new Uint8Array([9, 8, 7]), { status: 200 }),
-			),
+			vi.fn(async () => new Response(pngBody(9, 8, 7), { status: 200 })),
 		);
 		const dir = await tmp();
 		await fetchSprites(["mew"], dir);
-		expect([...(await readFile(join(dir, "mew.png")))]).toEqual([9, 8, 7]);
+		expect([...(await readFile(join(dir, "mew.png")))]).toEqual([
+			...PNG_SIGNATURE,
+			9,
+			8,
+			7,
+		]);
 		expect(await readdir(dir)).toEqual(["mew.png"]);
+	});
+
+	it("treats a 200 non-PNG body as failed, writes nothing and logs the reason", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => new Response("<html>blocked</html>", { status: 200 })),
+		);
+		const log = vi.spyOn(console, "error").mockImplementation(() => {});
+		const dir = await tmp();
+		expect(await fetchSprites(["mew"], dir)).toEqual({
+			ok: [],
+			failed: ["mew"],
+		});
+		expect(await readdir(dir)).toEqual([]);
+		expect(log).toHaveBeenCalledWith(expect.stringContaining("mew"));
+		log.mockRestore();
 	});
 });

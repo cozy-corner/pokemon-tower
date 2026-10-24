@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const INDEX_URL = "https://pokemondb.net/sprites";
 const IMAGE_URL = "https://img.pokemondb.net/sprites/home/normal/1x";
 const HEADERS = { "User-Agent": "Mozilla/5.0" };
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const DELAY_MS = 100;
 
 export function parseNames(html: string): string[] {
@@ -33,11 +34,18 @@ export async function fetchSprites(
 			const res = await fetch(`${IMAGE_URL}/${name}.png`, { headers: HEADERS });
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			// Rename after a complete write so an interrupted run never leaves a partial .png that the skip check would trust.
+			const body = new Uint8Array(await res.arrayBuffer());
+			// The CDN can answer 200 with an HTML block page when it dislikes the client.
+			if (!PNG_SIGNATURE.every((b, i) => body[i] === b))
+				throw new Error("not a PNG");
 			const tmpPath = `${path}.part`;
-			await writeFile(tmpPath, new Uint8Array(await res.arrayBuffer()));
+			await writeFile(tmpPath, body);
 			await rename(tmpPath, path);
 			ok.push(name);
-		} catch {
+		} catch (e) {
+			console.error(
+				`failed: ${name} (${e instanceof Error ? e.message : String(e)})`,
+			);
 			failed.push(name);
 		}
 		await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
