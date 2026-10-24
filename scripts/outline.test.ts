@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { polygonArea } from "../src/geometry/polygon";
 import { PIXELS_PER_METER, type Vec } from "../src/geometry/types";
 import {
 	computeOutline,
@@ -6,7 +7,6 @@ import {
 	MAX_POLYGON_VERTICES,
 	type Mask,
 	MIN_ISLAND_PX,
-	polygonArea,
 	THIN_THICKNESS_PX,
 } from "./outline";
 

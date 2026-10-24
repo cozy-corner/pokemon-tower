@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import shapes from "../../public/shapes.json";
+import { polygonArea } from "../geometry/polygon";
 import type { OutlineResult, Vec } from "../geometry/types";
 import {
 	createWorld,
@@ -25,14 +26,6 @@ const box = (hw: number, hh: number, cx = 0, cy = 0): Vec[] => [
 	{ x: cx + hw, y: cy + hh },
 	{ x: cx - hw, y: cy + hh },
 ];
-
-const area = (poly: Vec[]) =>
-	Math.abs(
-		poly.reduce((sum, a, i) => {
-			const b = poly[(i + 1) % poly.length];
-			return sum + a.x * b.y - b.x * a.y;
-		}, 0) / 2,
-	);
 
 const run = (world: World, seconds: number, until?: () => boolean) => {
 	const steps = Math.round(seconds / DT);
@@ -107,7 +100,7 @@ describe("createWorld", () => {
 		const info = world.inspect(piece);
 		expect(info.fixtures).toBe(polygons.length);
 		// Density 1, so mass equals the summed area.
-		const total = polygons.reduce((s, p) => s + area(p), 0);
+		const total = polygons.reduce((s, p) => s + Math.abs(polygonArea(p)), 0);
 		expect(info.mass).toBeGreaterThan(0);
 		expect(info.mass).toBeCloseTo(total, 6);
 	});
