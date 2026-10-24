@@ -47,7 +47,7 @@ export function computeOutline(mask: Mask): OutlineResult {
 
 	// Stats describe the sprite as drawn (the original kept mask), while the
 	// polygons come from the saddle- and hole-filled mask.
-	const hull = convexHull(pixelCorners(kept, w, h));
+	const hull = convexHull(rowExtremeCorners(kept, w, h));
 	const thickness = (2 * area) / boundaryLength(kept, w, h);
 	return {
 		polygons,
@@ -438,18 +438,27 @@ function turns(poly: Vec[], cycle: number[]): number[] {
 	);
 }
 
-function pixelCorners(m: Uint8Array, w: number, h: number): Vec[] {
+/**
+ * Corners of the leftmost and rightmost solid pixel in each row: the convex
+ * hull of a union of pixel squares depends only on these.
+ */
+function rowExtremeCorners(m: Uint8Array, w: number, h: number): Vec[] {
 	const pts: Vec[] = [];
 	for (let y = 0; y < h; y++) {
+		let left = -1;
+		let right = -1;
 		for (let x = 0; x < w; x++) {
 			if (!m[y * w + x]) continue;
-			pts.push(
-				{ x, y },
-				{ x: x + 1, y },
-				{ x, y: y + 1 },
-				{ x: x + 1, y: y + 1 },
-			);
+			if (left < 0) left = x;
+			right = x;
 		}
+		if (left < 0) continue;
+		pts.push(
+			{ x: left, y },
+			{ x: left, y: y + 1 },
+			{ x: right + 1, y },
+			{ x: right + 1, y: y + 1 },
+		);
 	}
 	return pts;
 }
