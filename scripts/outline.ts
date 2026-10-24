@@ -1,12 +1,10 @@
-export type Mask = { alpha: Uint8Array; w: number; h: number };
-export type Vec = { x: number; y: number };
-export type OutlineResult = {
-	polygons: Vec[][];
-	stats: { components: number; fillOverHull: number; thin: boolean };
-};
+import {
+	type OutlineResult,
+	PIXELS_PER_METER,
+	type Vec,
+} from "../src/geometry/types";
 
-// Pixels used directly as meters make Planck unstable (bodies would be ~128 m).
-export const PIXELS_PER_METER = 32;
+export type Mask = { alpha: Uint8Array; w: number; h: number };
 export const SIMPLIFY_TOLERANCE_PX = 1.5;
 export const MIN_ISLAND_PX = 20;
 export const THIN_THICKNESS_PX = 8;
