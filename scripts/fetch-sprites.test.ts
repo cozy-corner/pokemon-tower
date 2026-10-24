@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -69,5 +69,18 @@ describe("fetchSprites", () => {
 			"https://img.pokemondb.net/sprites/home/normal/1x/mew.png",
 			{ headers: { "User-Agent": "Mozilla/5.0" } },
 		);
+	});
+
+	it("writes the full body to the final path and leaves no .part file", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(
+				async () => new Response(new Uint8Array([9, 8, 7]), { status: 200 }),
+			),
+		);
+		const dir = await tmp();
+		await fetchSprites(["mew"], dir);
+		expect([...(await readFile(join(dir, "mew.png")))]).toEqual([9, 8, 7]);
+		expect(await readdir(dir)).toEqual(["mew.png"]);
 	});
 });
