@@ -51,6 +51,8 @@ export type World = {
 	step(dt: number): void;
 	pieces(): Piece[];
 	remove(piece: Piece): void;
+	/** Smallest world y over all piece vertices; the pedestal top when empty. */
+	highestPoint(): number;
 	/** Diagnostics for tests and tuning; the game does not need it. */
 	inspect(piece: Piece): { fixtures: number; mass: number };
 };
@@ -65,7 +67,7 @@ type Entries = Map<string, { piece: Piece; body: Body }>;
 function addPiece(
 	world: PlanckWorld,
 	entries: Entries,
-	highestY: () => number,
+	highestPoint: () => number,
 	id: string,
 	polygons: Vec[][],
 	x: number,
@@ -80,7 +82,7 @@ function addPiece(
 	);
 	const body = world.createBody({
 		type: "dynamic",
-		position: new Vec2(x, highestY() - SPAWN_CLEARANCE - lowest),
+		position: new Vec2(x, highestPoint() - SPAWN_CLEARANCE - lowest),
 		angle,
 	});
 	// shapes.json is checked against Planck by shapes-data.test.ts.
@@ -136,7 +138,7 @@ export function createWorld({
 		return entry.body;
 	};
 
-	const highestY = () => {
+	const highestPoint = () => {
 		let top = PEDESTAL_TOP_Y;
 		for (const { body } of entries.values()) {
 			for (let f = body.getFixtureList(); f; f = f.getNext()) {
@@ -150,7 +152,8 @@ export function createWorld({
 
 	return {
 		addPiece: (id, polygons, x, angle) =>
-			addPiece(world, entries, highestY, id, polygons, x, angle),
+			addPiece(world, entries, highestPoint, id, polygons, x, angle),
+		highestPoint,
 		step: (dt) => world.step(dt),
 		pieces: () => [...entries.values()].map((e) => e.piece),
 		remove: (piece) => {

@@ -114,6 +114,16 @@ describe("createWorld", () => {
 		expect(world.inspect(ccw).mass).toBeCloseTo(2, 9);
 	});
 
+	it("reports the highest point of the tower", () => {
+		const world = createWorld();
+		expect(world.highestPoint()).toBe(PEDESTAL_TOP_Y);
+		const piece = world.addPiece("a", [box(0.5, 1)], 0, 0);
+		run(world, SETTLE_S, () => piece.asleep);
+		expect(world.highestPoint()).toBeCloseTo(piece.y - 1, 1);
+		world.remove(piece);
+		expect(world.highestPoint()).toBe(PEDESTAL_TOP_Y);
+	});
+
 	it("removes pieces and rejects duplicate ids", () => {
 		const world = createWorld();
 		const a = world.addPiece("a", [box(0.5, 0.5)], 0, 0);
