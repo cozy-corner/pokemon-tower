@@ -389,8 +389,10 @@ function mergeConvex(poly: Vec[], tris: [number, number, number][]): Vec[][] {
 					...rotateToStart(piece, b),
 					...rotateToStart(other, a).slice(1, -1),
 				];
-				if (!isConvexChain(poly, union)) continue;
-				if (cornerCount(poly, union) > MAX_POLYGON_VERTICES) continue;
+				const unionTurns = turns(poly, union);
+				if (unionTurns.some((t) => t < 0)) continue;
+				const corners = unionTurns.filter((t) => t !== 0).length;
+				if (corners > MAX_POLYGON_VERTICES) continue;
 				for (const piece2 of [piece, other]) {
 					for (let j = 0; j < piece2.length; j++) {
 						owner.delete(key(piece2[j], piece2[(j + 1) % piece2.length]));
@@ -420,31 +422,12 @@ function rotateToStart(cycle: number[], first: number): number[] {
 	return [...cycle.slice(i), ...cycle.slice(0, i)];
 }
 
-function isConvexChain(poly: Vec[], cycle: number[]): boolean {
+/** Turn at each vertex of a cyclic index list (see `cross`). */
+function turns(poly: Vec[], cycle: number[]): number[] {
 	const n = cycle.length;
-	for (let i = 0; i < n; i++) {
-		const turn = cross(
-			poly[cycle[(i + n - 1) % n]],
-			poly[cycle[i]],
-			poly[cycle[(i + 1) % n]],
-		);
-		if (turn < 0) return false;
-	}
-	return true;
-}
-
-function cornerCount(poly: Vec[], cycle: number[]): number {
-	const n = cycle.length;
-	let count = 0;
-	for (let i = 0; i < n; i++) {
-		const turn = cross(
-			poly[cycle[(i + n - 1) % n]],
-			poly[cycle[i]],
-			poly[cycle[(i + 1) % n]],
-		);
-		if (turn !== 0) count++;
-	}
-	return count;
+	return cycle.map((v, i) =>
+		cross(poly[cycle[(i + n - 1) % n]], poly[v], poly[cycle[(i + 1) % n]]),
+	);
 }
 
 function pixelCorners(m: Uint8Array, w: number, h: number): Vec[] {
