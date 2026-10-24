@@ -5,7 +5,7 @@
     "": {
       "name": "pokemon-tower",
       "dependencies": {
-        "planck": "^1.5.1",
+        "planck": "1.5.1",
       },
       "devDependencies": {
         "@biomejs/biome": "^2.6.2",
