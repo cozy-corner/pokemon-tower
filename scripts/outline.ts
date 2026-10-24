@@ -45,6 +45,8 @@ export function computeOutline(mask: Mask): OutlineResult {
 		}
 	}
 
+	// Stats describe the sprite as drawn (the original kept mask), while the
+	// polygons come from the saddle- and hole-filled mask.
 	const hull = convexHull(pixelCorners(kept, w, h));
 	const thickness = (2 * area) / boundaryLength(kept, w, h);
 	return {
