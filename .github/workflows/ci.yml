@@ -5,12 +5,16 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v5
+      - run: git ls-files | scripts/guard-images.sh
       - run: bun install --frozen-lockfile
       - run: bun run check
       - run: bun run build
