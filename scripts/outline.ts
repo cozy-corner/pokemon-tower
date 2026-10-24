@@ -32,18 +32,13 @@ export function computeOutline(mask: Mask): OutlineResult {
 	fillSaddles(solid, w, h);
 	fillHoles(solid, w, h);
 
-	const polygons: Vec[][] = [];
-	for (const start of islandStarts(solid, w, h)) {
-		const contour = traceOuter(solid, w, h, start);
-		for (const piece of decomposeContour(contour)) {
-			polygons.push(
-				piece.map((p) => ({
-					x: (p.x - w / 2) / PIXELS_PER_METER,
-					y: (p.y - h / 2) / PIXELS_PER_METER,
-				})),
-			);
-		}
-	}
+	const toMeters = (p: Vec): Vec => ({
+		x: (p.x - w / 2) / PIXELS_PER_METER,
+		y: (p.y - h / 2) / PIXELS_PER_METER,
+	});
+	const polygons = islandStarts(solid, w, h)
+		.flatMap((start) => decomposeContour(traceOuter(solid, w, h, start)))
+		.map((piece) => piece.map(toMeters));
 
 	// Stats describe the sprite as drawn (the original kept mask), while the
 	// polygons come from the saddle- and hole-filled mask.
