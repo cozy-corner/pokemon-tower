@@ -1,13 +1,12 @@
 import { Settings } from "planck";
 import { describe, expect, it } from "vitest";
+import { PIXELS_PER_METER, type Vec } from "../src/geometry/types";
 import {
 	computeOutline,
 	MAX_POLYGON_VERTICES,
 	type Mask,
 	MIN_ISLAND_PX,
-	PIXELS_PER_METER,
 	THIN_THICKNESS_PX,
-	type Vec,
 } from "./outline";
 
 function blankMask(w: number, h: number): Mask {
