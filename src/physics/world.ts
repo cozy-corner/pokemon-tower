@@ -70,13 +70,13 @@ export function createWorld(): World {
 		return body;
 	};
 
-	const highestY = () =>
-		Math.min(
-			PEDESTAL_TOP_Y,
-			...[...bodies.values()].flatMap((b) =>
-				polygonVertices(b).map((p) => p.y),
-			),
-		);
+	const highestY = () => {
+		let top = PEDESTAL_TOP_Y;
+		for (const body of bodies.values()) {
+			for (const p of polygonVertices(body)) top = Math.min(top, p.y);
+		}
+		return top;
+	};
 
 	const addPiece = (
 		id: string,
