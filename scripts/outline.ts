@@ -6,6 +6,10 @@ import {
 } from "../src/geometry/types";
 
 export type Mask = { alpha: Uint8Array; w: number; h: number };
+
+/** Three indices into a polygon's vertex array. */
+type Triangle = [number, number, number];
+
 export const SIMPLIFY_TOLERANCE_PX = 1.5;
 export const MIN_ISLAND_PX = 20;
 export const THIN_THICKNESS_PX = 8;
@@ -318,9 +322,9 @@ function isSimple(poly: Vec[]): boolean {
 }
 
 /** Ear clipping for a simple polygon with positive area. Null on failure. */
-function earClip(poly: Vec[]): [number, number, number][] | null {
+function earClip(poly: Vec[]): Triangle[] | null {
 	const idx = poly.map((_, i) => i);
-	const tris: [number, number, number][] = [];
+	const tris: Triangle[] = [];
 	while (idx.length > 3) {
 		const n = idx.length;
 		let clipped = false;
@@ -362,7 +366,7 @@ function earClip(poly: Vec[]): [number, number, number][] | null {
  * Merges that would exceed MAX_POLYGON_VERTICES are refused, so no piece
  * ever needs splitting afterwards.
  */
-function mergeConvex(poly: Vec[], tris: [number, number, number][]): Vec[][] {
+function mergeConvex(poly: Vec[], tris: Triangle[]): Vec[][] {
 	const pieces: (number[] | null)[] = tris.map((t) => [...t]);
 	const owner = new Map<string, number>();
 	const key = (from: number, to: number) => `${from},${to}`;
