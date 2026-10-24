@@ -14,7 +14,7 @@
 
 - 第1段階はひとり用のみ。**通信・部屋・対戦のコードは書かない。**
 - 素材は HOME の 128px: `https://img.pokemondb.net/sprites/home/normal/1x/{名前}.png`。対象は全1025種類。
-- 画像ファイルは **git に commit しない**(`.gitignore` に置き場を書く)。スクリプトと名前一覧は commit する。
+- 画像ファイルは **git に commit しない**(`.gitignore` に置き場を書く)。スクリプトと名前一覧は commit する。例外は UI 用の `src/assets/ui/` だけ。判定は `scripts/guard-images.sh` で、commit 時のフックと CI が同じものを使う。フックは `bun install` の `prepare` で設定される。
 - ホットリンクしない。画像はローカルに保存して配信する。
 - 画面は縦向き。ボタンは大きく、文字より絵やアイコンを使う(5歳は読めない)。
 - ひとり用は落ちても終わらない。積めた数と高さを記録する。落とすポケモンはランダム。入れ替えボタンは作らない。
@@ -59,7 +59,7 @@
 - [ ] **Step 1: Vite(TypeScript テンプレート)、Vitest、Planck.js、pngjs を `bun add` で入れる。** `tsx` は入れない(bun が TypeScript を直接実行する)。
 - [ ] **Step 2: `.gitignore` に `node_modules`、`dist`、`public/sprites/` を書く。**
 - [ ] **Step 3: Biome を入れ、`biome.json` に推奨の lint と format を設定する。** 上のスクリプトを `package.json` に書く。`bun run check` は、Biome の検査(`biome ci .`)、`tsc --noEmit`、`vitest run --passWithNoTests` の順に実行して、1つでも失敗したら失敗にする。
-- [ ] **Step 4: `.githooks/pre-commit` に、画像のガードの後、staged のファイルに Biome の検査(`biome check --staged`)をかける。** 画像のガードは今のまま残す。
+- [ ] **Step 4: `.githooks/pre-commit` に、画像のガードの後、staged のファイルに Biome の検査(`biome check --staged`)をかける。** 画像のガードは `scripts/guard-images.sh` にまとめ(`src/assets/ui/` だけ許可)、CI も同じものを使う。`package.json` の `prepare` で `core.hooksPath` を設定する。
 - [ ] **Step 5: `.github/workflows/ci.yml` を書く。** `pull_request` と `main` への `push` で動き、`jdx/mise-action` で `mise.toml` の bun と Node を入れ、`bun install --frozen-lockfile` のあと、`bun run check` と `bun run build` を実行する。使う Action のバージョンは、各 Action の公式 README で確認して固定する。
 - [ ] **Step 6: `.github/pull_request_template.md` を書く。** 項目は「概要」と、確認の欄(`bun run check` が通る)の2つだけにする。画像は commit 時のフックが止めるので、項目にしない。
 - [ ] **Step 7: 動作を確認する。**
