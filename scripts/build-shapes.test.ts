@@ -76,6 +76,13 @@ describe("buildShapes", () => {
 		expect(flagged).toEqual({ ghost: ["low-fill"] });
 	});
 
+	it("treats a sprite with no polygons as invalid and leaves it out of shapes", () => {
+		const empty: Mask = { alpha: new Uint8Array(16), w: 4, h: 4 };
+		const { shapes, invalid } = buildShapes(["ghost"], () => empty);
+		expect(invalid).toEqual(["ghost"]);
+		expect(shapes).toEqual({});
+	});
+
 	it("reports names whose rounded pieces are no longer valid", () => {
 		const { invalid } = buildShapes(["big"], () => square(40));
 		expect(invalid).toEqual([]);
