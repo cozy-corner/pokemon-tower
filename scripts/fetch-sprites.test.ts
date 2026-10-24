@@ -2,7 +2,15 @@ import { existsSync } from "node:fs";
 import { mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	type MockInstance,
+	vi,
+} from "vitest";
 import { assertNotShrinking, fetchSprites, parseNames } from "./fetch-sprites";
 
 describe("parseNames", () => {
@@ -46,8 +54,13 @@ const pngBody = (...rest: number[]) =>
 	new Uint8Array([...PNG_SIGNATURE, ...rest]);
 
 describe("fetchSprites", () => {
+	let log: MockInstance;
+	beforeEach(() => {
+		log = vi.spyOn(console, "error").mockImplementation(() => {});
+	});
 	afterEach(() => {
 		vi.unstubAllGlobals();
+		vi.restoreAllMocks();
 	});
 
 	const tmp = () => mkdtemp(join(tmpdir(), "sprites-"));
@@ -64,19 +77,56 @@ describe("fetchSprites", () => {
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
 
-	it("records non-200 and thrown errors as failed and keeps going", async () => {
-		const fetchMock = vi.fn(async (url: string) => {
-			if (url.endsWith("/missing.png"))
-				return new Response("", { status: 404 });
-			if (url.endsWith("/boom.png")) throw new Error("network");
-			return new Response(pngBody(1, 2, 3), { status: 200 });
-		});
-		vi.stubGlobal("fetch", fetchMock);
+	it.each([404, 500])(
+		"records HTTP %i as failed, writes no file and logs the status",
+		async (status) => {
+			vi.stubGlobal(
+				"fetch",
+				vi.fn(async () => new Response("", { status })),
+			);
+			const dir = await tmp();
+			expect(await fetchSprites(["missing"], dir)).toEqual({
+				ok: [],
+				failed: ["missing"],
+			});
+			expect(existsSync(join(dir, "missing.png"))).toBe(false);
+			expect(log).toHaveBeenCalledWith(
+				expect.stringContaining(`missing (HTTP ${status})`),
+			);
+		},
+	);
+
+	it("records a thrown network error as failed, writes no file and logs the error", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => {
+				throw new Error("network");
+			}),
+		);
 		const dir = await tmp();
-		const result = await fetchSprites(["missing", "boom", "eevee"], dir);
-		expect(result).toEqual({ ok: ["eevee"], failed: ["missing", "boom"] });
+		expect(await fetchSprites(["boom"], dir)).toEqual({
+			ok: [],
+			failed: ["boom"],
+		});
+		expect(existsSync(join(dir, "boom.png"))).toBe(false);
+		expect(log).toHaveBeenCalledWith(expect.stringContaining("boom (network)"));
+	});
+
+	it("keeps fetching the remaining names after one fails", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async (url: string) =>
+				url.endsWith("/missing.png")
+					? new Response("", { status: 404 })
+					: new Response(pngBody(1, 2, 3), { status: 200 }),
+			),
+		);
+		const dir = await tmp();
+		expect(await fetchSprites(["missing", "eevee"], dir)).toEqual({
+			ok: ["eevee"],
+			failed: ["missing"],
+		});
 		expect(existsSync(join(dir, "eevee.png"))).toBe(true);
-		expect(existsSync(join(dir, "missing.png"))).toBe(false);
 	});
 
 	it("sends a User-Agent header", async () => {
@@ -112,14 +162,14 @@ describe("fetchSprites", () => {
 			"fetch",
 			vi.fn(async () => new Response("<html>blocked</html>", { status: 200 })),
 		);
-		const log = vi.spyOn(console, "error").mockImplementation(() => {});
 		const dir = await tmp();
 		expect(await fetchSprites(["mew"], dir)).toEqual({
 			ok: [],
 			failed: ["mew"],
 		});
 		expect(await readdir(dir)).toEqual([]);
-		expect(log).toHaveBeenCalledWith(expect.stringContaining("mew"));
-		log.mockRestore();
+		expect(log).toHaveBeenCalledWith(
+			expect.stringContaining("mew (not a PNG)"),
+		);
 	});
 });
