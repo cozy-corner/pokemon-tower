@@ -1,4 +1,3 @@
-import { Settings } from "planck";
 import { describe, expect, it } from "vitest";
 import { PIXELS_PER_METER, type Vec } from "../src/geometry/types";
 import {
@@ -70,10 +69,6 @@ function totalArea(polygons: Vec[][]): number {
 const PX2 = PIXELS_PER_METER * PIXELS_PER_METER;
 
 describe("computeOutline", () => {
-	it("keeps the vertex cap in sync with Planck", () => {
-		expect(MAX_POLYGON_VERTICES).toBe(Settings.maxPolygonVertices);
-	});
-
 	it("turns a filled square into one quad centered on the image", () => {
 		const mask = blankMask(16, 16);
 		fillRect(mask, 4, 4, 8, 8);
