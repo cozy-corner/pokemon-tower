@@ -159,8 +159,8 @@ describe("createWorld", () => {
 	});
 
 	// Regression pin, pinned to FRICTION 0.6, SPAWN_CLEARANCE 0.5, a pedestal
-	// of half-width 3 m and Planck 1.5.1: any change topples it; regenerate
-	// the pin. Found on a 1 m thick pedestal; it still holds at 0.8 m.
+	// of half-width 3 and thickness 1 and Planck 1.5.1: any change topples
+	// it; regenerate the pin.
 	// Found by an offline greedy search: per piece, in this order, try angles
 	// (multiples of PI/4) then x in 0.25 m steps up to ±1.25, replaying all
 	// drops in a fresh world; keep the first where everything stays on the
@@ -184,7 +184,10 @@ describe("createWorld", () => {
 			x,
 			angle,
 		}));
-		const { standing, moved } = dropAndWatch(drops, { pedestalHalfWidth: 3 });
+		const { standing, moved } = dropAndWatch(drops, {
+			pedestalHalfWidth: 3,
+			pedestalThickness: 1,
+		});
 		expect(standing.map((p) => p.id)).toEqual(
 			placements.slice(1).map(([id]) => id),
 		);
