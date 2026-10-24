@@ -25,6 +25,8 @@ export const INITIAL_CAMERA_TOP = VIEW_BOTTOM_Y - VIEW_HEIGHT;
 const PIECE_TOP_MARGIN = 2.5;
 /** Where the tower top sits on screen, as a fraction of the view from the top. */
 const TOWER_TOP_FRACTION = 0.3;
+/** CSS-pixel width of the backing store; the height follows the 9:16 aspect. */
+const BACKING_WIDTH = 360;
 const SPRITE_SIZE = 128 / PIXELS_PER_METER;
 
 /** World y at the top edge of the screen. Never lower than the initial view. */
@@ -45,8 +47,8 @@ export function createRenderer(
 ): Renderer {
 	const dpr = window.devicePixelRatio || 1;
 	// Backing store is sized once; CSS scales it to the window.
-	canvas.width = Math.round(360 * dpr);
-	canvas.height = Math.round(640 * dpr);
+	canvas.width = Math.round(BACKING_WIDTH * dpr);
+	canvas.height = Math.round((BACKING_WIDTH * 16 * dpr) / 9);
 	const ctx = canvas.getContext("2d");
 	if (!ctx) throw new Error("2d context unavailable");
 	const scale = canvas.width / VIEW_WIDTH;
