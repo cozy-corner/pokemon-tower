@@ -163,10 +163,19 @@ describe("createWorld", () => {
 		expect(moved).toEqual([]);
 	});
 
-	it("keeps a tower of real sprites still for 30 seconds", () => {
-		// Placements found offline by a greedy search over x and quarter turns,
-		// standing in for a player who aims; a careless drop topples this tower.
-		// bulbasaur goes over the edge on purpose to exercise the fall-off rule.
+	// Regression pin for the CURRENT tuning, not the stability acceptance check:
+	// these placements were found for FRICTION 0.6, SPAWN_CLEARANCE 0.5, the
+	// 6 m x 1 m pedestal and Planck 1.5.1. Changing any of them (even friction
+	// 0.5 or 0.7) topples the tower, and the pin must be regenerated.
+	// Search used: greedy over the names in this order (bulbasaur excluded);
+	// for each name try angle in [0, PI, PI/2, -PI/2, PI/4, -PI/4, 3PI/4,
+	// -3PI/4] then x in [0, 0.25, -0.25, 0.5, -0.5, ..., 1.25, -1.25]; each
+	// candidate replays all accepted drops plus itself in a fresh world with
+	// the drop protocol below, then steps up to 4 s more until all sleep; the
+	// first candidate with every piece at y < PEDESTAL_TOP_Y and asleep is
+	// kept. bulbasaur was then prepended by hand, off the edge, to exercise
+	// the fall-off rule.
+	it("pins a 9-high tower of real sprites for the current tuning", () => {
 		const placements: [string, number, number][] = [
 			["bulbasaur", -2.5, 0],
 			["snorlax", 0, 0],
