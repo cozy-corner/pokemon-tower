@@ -1,13 +1,13 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { PNG } from "pngjs";
+import { polygonArea } from "../src/geometry/polygon";
 import type { OutlineResult, Vec } from "../src/geometry/types";
 import {
 	computeOutline,
 	cross,
 	MAX_POLYGON_VERTICES,
 	type Mask,
-	polygonArea,
 } from "./outline";
 
 export type FlagReason = "multi-island" | "low-fill" | "thin";
