@@ -184,9 +184,9 @@
 
 **Interfaces:**
 - Consumes: `World`(Task 5)、`createControls`(Task 7)、`createRenderer`(Task 6)、`public/shapes.json`、`data/exclusions.json`
-- Produces: `export const SPAWN_TIMEOUT_S = 3`、`export const KILL_LINE_Y`(台座より下の位置)、`export function pickNext(names: string[], excluded: Set<string>, previous: string | null, rand: () => number): string`、`export function createGame(deps): Game`。`Game` は `{ stackedCount: number; heightM: number }` を持つ。
+- Produces: `export const SPAWN_TIMEOUT_S = 20`(静止を待つ上限。一番遅く眠る剛体が17〜18秒かかるため)、`export const KILL_LINE_Y`(台座より下の位置)、`export function pickNext(names: string[], excluded: Set<string>, previous: string | null, rand: () => number): string`、`export function createGame(deps): Game`。`Game` は `{ stackedCount: number; heightM: number }` を持つ。
 
-- [ ] **Step 1: テストを書く。** (a) `pickNext` は除外リストに入っている名前を返さず、直前と同じ名前も返さない。(b) 台座から落ちて `KILL_LINE_Y` を下回った剛体は消えて、ゲームは続き、`stackedCount` に数えない。(c) 次のポケモンは「全部の剛体が静止した」または「`SPAWN_TIMEOUT_S` 秒が過ぎた」のどちらか早いほうで出る。(d) `heightM` は台座の上面から、静止している剛体の一番高い点までの高さ。(e) 画像が読めないポケモンは飛ばして、別のものを選ぶ。
+- [ ] **Step 1: テストを書く。** (a) `pickNext` は除外リストに入っている名前を返さず、直前と同じ名前も返さない。(b) 台座から落ちて `KILL_LINE_Y` を下回った剛体は消えて、ゲームは続き、`stackedCount` に数えない。(c) 次のポケモンは、落とした後に全部の剛体が静止してから出る。静止しないままでも `SPAWN_TIMEOUT_S` 秒が過ぎたら出る。(d) `heightM` は台座の上面から、静止している剛体の一番高い点までの高さ。(e) 画像が読めないポケモンは飛ばして、別のものを選ぶ。
 - [ ] **Step 2: テストが失敗することを確認する。**
 - [ ] **Step 3: `pickNext` と `createGame` を実装する。**
 - [ ] **Step 4: テストが通ることを確認する。**
