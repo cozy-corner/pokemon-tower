@@ -21,6 +21,7 @@
 - 「勝手に崩れない」の基準: 何も触らずに30秒置いて動かない。満たせなければ別の物理エンジンを検討する。
 - commit は Conventional Commits の件名のみ(本文なし)。タスクごとに1 commit。末尾に `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` を付ける。
 - パッケージ管理とスクリプト実行は bun。`npm` は使わない。bun と Node のバージョンは `mise.toml` で固定し、手元も CI も mise で同じ版を入れる。マシンに入っているものに頼らない。commit の前に `bun run check` が通ること。
+- `scripts/`(ビルド時の道具)と `src/`(プロダクト)は分ける。依存は一方向で、`scripts/` は `src/` の型や定数を読めるが、`src/` は `scripts/` を読まない。
 - 実装を始める前に `branch-workflow` スキルを呼ぶ(`superpowers:using-git-worktrees` ではなく)。
 
 ## PR の分け方
@@ -88,39 +89,42 @@
 ### Task 3: 輪郭の計算
 
 **Files:**
-- Create: `src/geometry/outline.ts`
-- Test: `src/geometry/outline.test.ts`
+- Create: `scripts/outline.ts`(アルゴリズム。ビルド時にだけ使う)、`src/geometry/types.ts`(プロダクトも使う型と換算)
+- Test: `scripts/outline.test.ts`
 
 **Interfaces:**
-- Produces:
-  - `type Mask = { alpha: Uint8Array; w: number; h: number }`
+- Produces(`src/geometry/types.ts`):
   - `type Vec = { x: number; y: number }`
   - `type OutlineResult = { polygons: Vec[][]; stats: { components: number; fillOverHull: number; thin: boolean } }`
   - `export const PIXELS_PER_METER = 32`(ピクセルをメートルにする倍率。ピクセルをそのままメートルにすると物理が不安定になる)
+- Produces(`scripts/outline.ts`):
+  - `type Mask = { alpha: Uint8Array; w: number; h: number }`
   - `export const SIMPLIFY_TOLERANCE_PX = 1.5`(初期値。Task 4 のプレビューを見て調整)
   - `export const MIN_ISLAND_PX = 20`(これより小さい島はゴミとして無視する。調査で「小さい」とした画素数)
-  - `export function computeOutline(mask: Mask): OutlineResult`(多角形の座標はメートルで、中心を原点にする)
-
+  - `export const THIN_THICKNESS_PX = 8`(平均の太さ 2×面積÷外周 がこれ未満なら `thin`)
+  - `export function computeOutline(mask: Mask): OutlineResult`
+- 座標: 多角形の頂点はメートル(ピクセル÷`PIXELS_PER_METER`)で、画像の中心が原点、y は下向き(canvas と同じ。物理の重力も +y)。各多角形は凸で、頂点数は Planck の上限(12)以下。
+- `stats.components` は、アルファが127超の8近傍の島のうち、面積が `MIN_ISLAND_PX` 以上のものの数(穴や斜めの隙間を埋める前に数える)。
 - [ ] **Step 1: 合成マスクでテストを書く。** (a) 8×8の塗りつぶし正方形 → 多角形1つ、頂点4、`components` は1。(b) L字 → 凸多角形に分かれ、各多角形の頂点数は上限以下。(c) 離れた2つの島(どちらも `MIN_ISLAND_PX` 以上) → `components` は2で、両方の島の多角形が返る。(c2) 大きな島と、`MIN_ISLAND_PX` 未満の島 → 大きな島の多角形だけが返る。(d) 中に穴のある四角 → 穴は無視されて外側だけ。(e) アルファが127以下の画素は無視する。
 - [ ] **Step 2: テストが失敗することを確認する。**
-- [ ] **Step 3: `computeOutline` を実装する。** 手順は、アルファ127超でマスク化、`MIN_ISLAND_PX` 未満の連結成分を捨てる、残った島ごとに外側の輪郭をたどる、Douglas-Peucker で簡略化、凸多角形へ分解、Planck の頂点数の上限(Task 1 で確認した値)を超えたものを分ける。分解は `poly-decomp` などのライブラリを使ってよい。
+- [ ] **Step 3: `computeOutline` を実装する。** 手順は、アルファ127超でマスク化、`MIN_ISLAND_PX` 未満の連結成分を捨てる、残った島ごとに外側の輪郭をたどる、Douglas-Peucker で簡略化、凸多角形へ分解、Planck の頂点数の上限(Task 1 で確認した値)を超えたものを分ける。分解は、更新が止まったライブラリは使わず、耳切り(ear clipping)と Hertel–Mehlhorn の併合で自前で書いた。
 - [ ] **Step 4: テストが通ることを確認する。**
 - [ ] **Step 5: Commit** `feat(geometry): compute convex outline from sprite alpha`
 
 ### Task 4: 全種類の形の事前計算とプレビュー
 
 **Files:**
-- Create: `scripts/build-shapes.ts`、`data/exclusions.json`、`preview.html`、`src/preview.ts`
+- Create: `scripts/build-shapes.ts`、`data/exclusions.json`、`scripts/preview.html`、`scripts/preview.ts`(プレビューは開発用の道具なので、プロダクトの `src/` には置かない)
 - Generate: `public/shapes.json`(commit する。画像ではない)
 
 **Interfaces:**
-- Consumes: `computeOutline`(Task 3)、`data/names.json`
+- Consumes: `computeOutline`(`scripts/outline.ts`、Task 3)、`data/names.json`
 - Produces: `public/shapes.json` = `Record<string, OutlineResult>`。`data/exclusions.json` = 除外する名前の配列(手で編集できる)。スクリプトは、`components` が2以上、`fillOverHull` が0.45未満(調査で出た X/Y のリザードンが0.41)、`thin` のいずれかのものを `data/flagged.json` に出す。
 
 - [ ] **Step 1: `scripts/build-shapes.ts` を書く。** `pngjs` で PNG を読み、`computeOutline` を全1025種類に実行して `shapes.json` と `flagged.json` を作る。画像が読めない名前は飛ばして記録する。
 - [ ] **Step 2: 実行して、`flagged.json` の件数を確認する。**
   Expected: 完了し、飛ばした件数も一緒に出る。
-- [ ] **Step 3: `preview.html` を作る。** スプライトの上に多角形を重ねて、1匹ずつ送れる(前へ・次へ、名前で検索)。`flagged.json` のものだけを見るボタンも付ける。
+- [ ] **Step 3: `scripts/preview.html` を作る。** スプライトの上に多角形を重ねて、1匹ずつ送れる(前へ・次へ、名前で検索)。`flagged.json` のものだけを見るボタンも付ける。
 - [ ] **Step 4: ユーザーがプレビューを開き、変なものを `data/exclusions.json` に入れる。** 輪郭が崩れている種類が多ければ、`SIMPLIFY_TOLERANCE_PX` を直して Step 2 をやり直す。
 - [ ] **Step 5: Commit** `feat(scripts): precompute shapes for all sprites`
 
@@ -131,7 +135,7 @@
 - Test: `src/physics/world.test.ts`
 
 **Interfaces:**
-- Consumes: `OutlineResult`(Task 3)。`polygons` の全部が、1つの剛体の fixture になる。
+- Consumes: `OutlineResult`、`Vec`、`PIXELS_PER_METER`(`src/geometry/types.ts`、Task 3)。`polygons` の全部が、1つの剛体の fixture になる。
 - Produces: `export function createWorld(): World`、`World` は `{ addPiece(id: string, polygons: Vec[][], x: number, angle: number): Piece; step(dt: number): void; pieces(): Piece[]; remove(piece: Piece): void }`。`Piece` は `{ id: string; x: number; y: number; angle: number; asleep: boolean }`。台座は世界に固定で入っている。
 
 - [ ] **Step 1: 30秒の安定テストを書く。** 実際の形に近い不規則な多角形(L字などの合成形)10個を台座に積み、60Hz で30秒進める。5秒時点と30秒時点で、全部の位置の差が 0.01m 未満。
