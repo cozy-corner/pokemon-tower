@@ -6,6 +6,7 @@ import {
 	type Mask,
 	MIN_ISLAND_PX,
 	PIXELS_PER_METER,
+	THIN_THICKNESS_PX,
 	type Vec,
 } from "./outline";
 
@@ -60,6 +61,14 @@ function expectValidPolygons(polygons: Vec[][]): void {
 		expect(isStrictlyConvex(poly)).toBe(true);
 		expect(signedArea(poly)).toBeGreaterThan(0);
 	}
+}
+
+/** Assumes `poly` is convex with positive area, as computeOutline guarantees. */
+function containsPoint(poly: Vec[], p: Vec): boolean {
+	return poly.every((a, i) => {
+		const b = poly[(i + 1) % poly.length];
+		return (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x) >= 0;
+	});
 }
 
 function totalArea(polygons: Vec[][]): number {
@@ -198,6 +207,53 @@ describe("computeOutline", () => {
 		const block = blankMask(64, 64);
 		fillRect(block, 10, 10, 30, 30);
 		expect(computeOutline(block).stats.thin).toBe(false);
+	});
+
+	it("puts the thin threshold at mean thickness THIN_THICKNESS_PX", () => {
+		expect(THIN_THICKNESS_PX).toBe(8);
+		// A 9×L bar has t = 2A/P = 9L / (9 + L).
+		const under = blankMask(80, 20);
+		fillRect(under, 2, 5, 71, 9); // t = 639/80 = 7.9875
+		expect(computeOutline(under).stats.thin).toBe(true);
+		const at = blankMask(80, 20);
+		fillRect(at, 2, 5, 72, 9); // t = 648/81 = 8
+		expect(computeOutline(at).stats.thin).toBe(false);
+	});
+
+	it("counts an island inside another island's hole as its own component", () => {
+		const mask = blankMask(40, 40);
+		fillRect(mask, 2, 2, 30, 30);
+		fillRect(mask, 7, 7, 20, 20, 0);
+		fillRect(mask, 11, 11, 12, 12);
+		const { polygons, stats } = computeOutline(mask);
+		expect(stats.components).toBe(2);
+		expectValidPolygons(polygons);
+		expect(totalArea(polygons) * PX2).toBeCloseTo(900);
+	});
+
+	it("counts separate diagonal lines as separate components", () => {
+		const w = 40;
+		const mask = blankMask(w, 40);
+		const pixels: Vec[] = [];
+		for (let i = 0; i < 30; i++) {
+			pixels.push({ x: i + 2, y: i + 2 }, { x: i + 5, y: i + 2 });
+		}
+		for (const p of pixels) mask.alpha[p.y * w + p.x] = 255;
+		const { polygons, stats } = computeOutline(mask);
+		expect(stats.components).toBe(2);
+		expectValidPolygons(polygons);
+		const uncovered = pixels.filter((p) => {
+			const c = {
+				x: (p.x + 0.5 - w / 2) / PIXELS_PER_METER,
+				y: (p.y + 0.5 - 20) / PIXELS_PER_METER,
+			};
+			return !polygons.some((poly) => containsPoint(poly, c));
+		});
+		// Simplification clips the outer corner of the first line's top pixel.
+		expect(uncovered).toEqual([{ x: 2, y: 2 }]);
+		// Known, accepted approximation: cascading saddle fills bridge the gap
+		// between the lines, so the outline covers 143 px for a 60 px mask.
+		expect(totalArea(polygons) * PX2).toBeCloseTo(143);
 	});
 
 	it("returns an empty result when nothing is kept", () => {
