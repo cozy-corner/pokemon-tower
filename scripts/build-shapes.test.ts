@@ -6,7 +6,7 @@ import {
 	isValidPiece,
 	roundResult,
 } from "./build-shapes";
-import type { Mask } from "./outline";
+import { computeOutline, type Mask } from "./outline";
 
 const result = (stats: Partial<OutlineResult["stats"]>): OutlineResult => ({
 	polygons: [],
@@ -81,6 +81,21 @@ describe("buildShapes", () => {
 		const { shapes, invalid } = buildShapes(["ghost"], () => empty);
 		expect(invalid).toEqual(["ghost"]);
 		expect(shapes).toEqual({});
+	});
+
+	// No honest input makes the exact pixel outline fail to decompose, so the
+	// catch path is tested with an injected compute function.
+	it("records a sprite whose computation throws as invalid and continues", () => {
+		const { shapes, invalid } = buildShapes(
+			["bad", "big"],
+			(name) => square(name === "bad" ? 41 : 40),
+			(mask) => {
+				if (mask.w === 41) throw new Error("could not decompose contour");
+				return computeOutline(mask);
+			},
+		);
+		expect(invalid).toEqual(["bad"]);
+		expect(Object.keys(shapes)).toEqual(["big"]);
 	});
 
 	it("reports names whose rounded pieces are no longer valid", () => {

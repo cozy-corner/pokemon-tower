@@ -55,6 +55,7 @@ export function isValidPiece(poly: Vec[]): boolean {
 export function buildShapes(
 	names: string[],
 	loadMask: (name: string) => Mask | null,
+	compute: (mask: Mask) => OutlineResult = computeOutline,
 ): {
 	shapes: Record<string, OutlineResult>;
 	skipped: string[];
@@ -77,7 +78,13 @@ export function buildShapes(
 			continue;
 		}
 		// Flags use the exact stats; only the stored copy is rounded.
-		const raw = computeOutline(mask);
+		let raw: OutlineResult;
+		try {
+			raw = compute(mask);
+		} catch {
+			invalid.push(name);
+			continue;
+		}
 		const result = roundResult(raw);
 		if (result.polygons.length === 0 || !result.polygons.every(isValidPiece)) {
 			invalid.push(name);
