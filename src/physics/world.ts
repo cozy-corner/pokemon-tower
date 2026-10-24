@@ -5,7 +5,6 @@ import {
 	Polygon,
 	type PolygonShape,
 	Rot,
-	Settings,
 	Vec2,
 } from "planck";
 import type { Vec } from "../geometry/types";
@@ -107,16 +106,22 @@ export function createWorld({
 		if (entries.has(id)) {
 			throw new Error(`duplicate piece id ${id}`);
 		}
-		// Planck silently truncates longer polygons and swaps degenerate ones
-		// for a 2 m box, so refuse them instead.
-		if (
-			polygons.length === 0 ||
-			polygons.some(
-				(p) => p.length < 3 || p.length > Settings.maxPolygonVertices,
-			)
-		) {
-			throw new Error(`piece ${id} has an unusable polygon`);
-		}
+		if (polygons.length === 0) throw new Error(`piece ${id} has no polygons`);
+		// Planck cuts polygons to maxPolygonVertices, drops duplicate, collinear
+		// and non-hull points, and swaps a degenerate result for a box, all
+		// silently. Refuse any polygon whose Planck vertices are not exactly
+		// its own points.
+		const shapes = polygons.map((poly, i) => {
+			const shape = new Polygon(poly.map((v) => new Vec2(v.x, v.y)));
+			const kept = shape.m_vertices;
+			if (
+				kept.length !== poly.length ||
+				!kept.every((k) => poly.some((v) => v.x === k.x && v.y === k.y))
+			) {
+				throw new Error(`piece ${id}: polygon ${i} would be altered by Planck`);
+			}
+			return shape;
+		});
 		const rot = new Rot(angle);
 		const lowest = Math.max(
 			...polygons.flat().map((v) => Rot.mulVec2(rot, new Vec2(v.x, v.y)).y),
@@ -126,9 +131,9 @@ export function createWorld({
 			position: new Vec2(x, highestY() - SPAWN_CLEARANCE - lowest),
 			angle,
 		});
-		for (const poly of polygons) {
+		for (const shape of shapes) {
 			body.createFixture({
-				shape: new Polygon(poly.map((v) => new Vec2(v.x, v.y))),
+				shape,
 				density: DENSITY,
 				friction: FRICTION,
 				restitution: RESTITUTION,

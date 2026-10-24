@@ -130,6 +130,31 @@ describe("createWorld", () => {
 		expect(world.pieces()).toEqual([]);
 	});
 
+	it("rejects polygons Planck's hull step would change", () => {
+		const world = createWorld();
+		const collinear = [
+			{ x: 0, y: 0 },
+			{ x: 1, y: 0 },
+			{ x: 2, y: 0 },
+		];
+		// Four collinear points: Planck swaps in a 4-vertex box, so the count
+		// alone would not notice.
+		const collinear4 = [...collinear, { x: 3, y: 0 }];
+		const duplicated = [...box(0.5, 0.5), { x: 0.5, y: 0.5 }];
+		expect(() => world.addPiece("c", [box(0.5, 0.5), collinear], 0, 0)).toThrow(
+			"piece c: polygon 1 would be altered by Planck",
+		);
+		expect(() => world.addPiece("c4", [collinear4], 0, 0)).toThrow(
+			"piece c4: polygon 0 would be altered by Planck",
+		);
+		expect(() => world.addPiece("d", [duplicated], 0, 0)).toThrow(
+			"piece d: polygon 0 would be altered by Planck",
+		);
+		expect(world.pieces()).toEqual([]);
+		const ok = world.addPiece("ok", [box(0.5, 0.5)], 0, 0);
+		expect(world.pieces()).toEqual([ok]);
+	});
+
 	it("removes pieces and rejects duplicate ids", () => {
 		const world = createWorld();
 		const a = world.addPiece("a", [box(0.5, 0.5)], 0, 0);
