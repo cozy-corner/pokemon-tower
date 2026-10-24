@@ -2,12 +2,12 @@ import {
 	type Body,
 	Box,
 	World as PlanckWorld,
-	Polygon,
 	type PolygonShape,
 	Rot,
 	Vec2,
 } from "planck";
 import type { Vec } from "../geometry/types";
+import { toPlanckShapes } from "./polygons";
 
 // Meters, +y down (same as the sprite images), so gravity is positive y.
 export const GRAVITY = 10;
@@ -106,22 +106,7 @@ export function createWorld({
 		if (entries.has(id)) {
 			throw new Error(`duplicate piece id ${id}`);
 		}
-		if (polygons.length === 0) throw new Error(`piece ${id} has no polygons`);
-		// Planck cuts polygons to maxPolygonVertices, drops duplicate, collinear
-		// and non-hull points, and swaps a degenerate result for a box, all
-		// silently. Refuse any polygon whose Planck vertices are not exactly
-		// its own points.
-		const shapes = polygons.map((poly, i) => {
-			const shape = new Polygon(poly.map((v) => new Vec2(v.x, v.y)));
-			const kept = shape.m_vertices;
-			if (
-				kept.length !== poly.length ||
-				!kept.every((k) => poly.some((v) => v.x === k.x && v.y === k.y))
-			) {
-				throw new Error(`piece ${id}: polygon ${i} would be altered by Planck`);
-			}
-			return shape;
-		});
+		const shapes = toPlanckShapes(id, polygons);
 		const rot = new Rot(angle);
 		const lowest = Math.max(
 			...polygons.flat().map((v) => Rot.mulVec2(rot, new Vec2(v.x, v.y)).y),
