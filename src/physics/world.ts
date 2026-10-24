@@ -13,8 +13,13 @@ import type { Vec } from "../geometry/types";
 // Meters, +y down (same as the sprite images), so gravity is positive y.
 export const GRAVITY = 10;
 export const PEDESTAL_TOP_Y = 0;
-export const PEDESTAL_HALF_WIDTH = 3;
-export const PEDESTAL_THICKNESS = 1;
+/** Half-widths in meters, estimated from screenshots of the original game
+ * (a few percent error). The large one appears most often there. */
+export const PEDESTAL_SIZES = { small: 2.8, medium: 3.25, large: 4.1 };
+/** The default pedestal's half-width. */
+export const PEDESTAL_HALF_WIDTH = PEDESTAL_SIZES.large;
+/** Estimated from screenshots of the original game, like the widths. */
+export const PEDESTAL_THICKNESS = 0.8;
 /** Gap between a new piece's lowest point and the highest point already in
  * the world (the pedestal top when empty). Kept small so the drop impact is
  * gentle (about 3 m/s). */
@@ -40,12 +45,16 @@ export type World = {
 	inspect(piece: Piece): { fixtures: number; mass: number };
 };
 
-export function createWorld(): World {
+export type WorldOptions = { pedestalHalfWidth?: number };
+
+export function createWorld({
+	pedestalHalfWidth = PEDESTAL_HALF_WIDTH,
+}: WorldOptions = {}): World {
 	const world = new PlanckWorld({ gravity: new Vec2(0, GRAVITY) });
 	const pedestal = world.createBody({ type: "static" });
 	pedestal.createFixture({
 		shape: new Box(
-			PEDESTAL_HALF_WIDTH,
+			pedestalHalfWidth,
 			PEDESTAL_THICKNESS / 2,
 			new Vec2(0, PEDESTAL_TOP_Y + PEDESTAL_THICKNESS / 2),
 		),
