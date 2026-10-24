@@ -9,6 +9,7 @@ import {
 	type Piece,
 	SPAWN_CLEARANCE,
 	type World,
+	type WorldOptions,
 } from "./world";
 
 const DT = 1 / 60;
@@ -50,8 +51,8 @@ const onPedestal = (p: Piece) => p.y < PEDESTAL_TOP_Y;
 /** Drops each piece once the previous one sleeps (or times out), then checks
  * that nothing on the pedestal moves between t = 5 s and t = 30 s. */
 type Drop = { id: string; polygons: Vec[][]; x: number; angle?: number };
-const dropAndWatch = (drops: Drop[]) => {
-	const world = createWorld();
+const dropAndWatch = (drops: Drop[], options?: WorldOptions) => {
+	const world = createWorld(options);
 	for (const d of drops) {
 		const piece = world.addPiece(d.id, d.polygons, d.x, d.angle ?? 0);
 		run(world, DROP_TIMEOUT_S, () => piece.asleep);
@@ -157,8 +158,9 @@ describe("createWorld", () => {
 		expect(moved).toEqual([]);
 	});
 
-	// Regression pin, pinned to FRICTION 0.6, SPAWN_CLEARANCE 0.5, the 6x1 m
-	// pedestal and Planck 1.5.1: any change topples it; regenerate the pin.
+	// Regression pin, pinned to FRICTION 0.6, SPAWN_CLEARANCE 0.5, a pedestal
+	// of half-width 3 m and Planck 1.5.1: any change topples it; regenerate
+	// the pin. Found on a 1 m thick pedestal; it still holds at 0.8 m.
 	// Found by an offline greedy search: per piece, in this order, try angles
 	// (multiples of PI/4) then x in 0.25 m steps up to ±1.25, replaying all
 	// drops in a fresh world; keep the first where everything stays on the
@@ -182,7 +184,7 @@ describe("createWorld", () => {
 			x,
 			angle,
 		}));
-		const { standing, moved } = dropAndWatch(drops);
+		const { standing, moved } = dropAndWatch(drops, { pedestalHalfWidth: 3 });
 		expect(standing.map((p) => p.id)).toEqual(
 			placements.slice(1).map(([id]) => id),
 		);
