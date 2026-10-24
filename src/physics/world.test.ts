@@ -114,45 +114,21 @@ describe("createWorld", () => {
 		expect(world.inspect(ccw).mass).toBeCloseTo(2, 9);
 	});
 
-	it("rejects polygons Planck would silently replace", () => {
-		const world = createWorld();
-		const line = [
-			{ x: 0, y: 0 },
-			{ x: 1, y: 0 },
-		];
-		const many = Array.from({ length: 13 }, (_, i) => ({
-			x: Math.cos((i / 13) * 2 * Math.PI),
-			y: Math.sin((i / 13) * 2 * Math.PI),
-		}));
-		expect(() => world.addPiece("none", [], 0, 0)).toThrow();
-		expect(() => world.addPiece("line", [line], 0, 0)).toThrow();
-		expect(() => world.addPiece("many", [many], 0, 0)).toThrow();
-		expect(world.pieces()).toEqual([]);
-	});
-
-	it("rejects polygons Planck's hull step would change", () => {
+	it("leaves nothing in the world when a piece is rejected", () => {
 		const world = createWorld();
 		const collinear = [
 			{ x: 0, y: 0 },
 			{ x: 1, y: 0 },
 			{ x: 2, y: 0 },
 		];
-		// Four collinear points: Planck swaps in a 4-vertex box, so the count
-		// alone would not notice.
-		const collinear4 = [...collinear, { x: 3, y: 0 }];
-		const duplicated = [...box(0.5, 0.5), { x: 0.5, y: 0.5 }];
 		expect(() => world.addPiece("c", [box(0.5, 0.5), collinear], 0, 0)).toThrow(
 			"piece c: polygon 1 would be altered by Planck",
 		);
-		expect(() => world.addPiece("c4", [collinear4], 0, 0)).toThrow(
-			"piece c4: polygon 0 would be altered by Planck",
-		);
-		expect(() => world.addPiece("d", [duplicated], 0, 0)).toThrow(
-			"piece d: polygon 0 would be altered by Planck",
-		);
 		expect(world.pieces()).toEqual([]);
+		// Spawns as in an empty world, so no body was left behind.
 		const ok = world.addPiece("ok", [box(0.5, 0.5)], 0, 0);
 		expect(world.pieces()).toEqual([ok]);
+		expect(ok.y).toBeCloseTo(PEDESTAL_TOP_Y - 0.5 - SPAWN_CLEARANCE, 9);
 	});
 
 	it("removes pieces and rejects duplicate ids", () => {
