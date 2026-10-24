@@ -454,13 +454,13 @@ function convexHull(pts: Vec[]): Vec[] {
 	const sorted = pts.slice().sort((a, b) => a.x - b.x || a.y - b.y);
 	const build = (list: Vec[]) => {
 		const hull: Vec[] = [];
+		const turnsLeftTo = (p: Vec) => {
+			const prev = hull.at(-2);
+			const last = hull.at(-1);
+			return !prev || !last || cross(prev, last, p) > 0;
+		};
 		for (const p of list) {
-			while (
-				hull.length >= 2 &&
-				cross(hull[hull.length - 2], hull[hull.length - 1], p) <= 0
-			) {
-				hull.pop();
-			}
+			while (!turnsLeftTo(p)) hull.pop();
 			hull.push(p);
 		}
 		hull.pop();
