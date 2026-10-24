@@ -13,8 +13,6 @@ export const MAX_POLYGON_VERTICES = 12;
 
 const ALPHA_THRESHOLD = 127;
 
-type Pt = { x: number; y: number };
-
 /**
  * Polygons are in meters, origin at the image center, +y down. Each polygon
  * has positive shoelace area in those coordinates.
@@ -162,9 +160,9 @@ function fillHoles(m: Uint8Array, w: number, h: number): void {
 }
 
 /** The first pixel (in scan order) of each 4-connected island. */
-function islandStarts(m: Uint8Array, w: number, h: number): Pt[] {
+function islandStarts(m: Uint8Array, w: number, h: number): Vec[] {
 	const seen = new Uint8Array(w * h);
-	const starts: Pt[] = [];
+	const starts: Vec[] = [];
 	const stack: number[] = [];
 	for (let i = 0; i < w * h; i++) {
 		if (!m[i] || seen[i]) continue;
@@ -195,13 +193,13 @@ function islandStarts(m: Uint8Array, w: number, h: number): Pt[] {
  * orientation), returning the corner points where the direction changes.
  * Assumes no saddles, so the next step is never ambiguous.
  */
-function traceOuter(m: Uint8Array, w: number, h: number, start: Pt): Pt[] {
+function traceOuter(m: Uint8Array, w: number, h: number, start: Vec): Vec[] {
 	const solidAt = (cx: number, cy: number, vx: number, vy: number) => {
 		const px = cx + (vx > 0 ? 0 : -1);
 		const py = cy + (vy > 0 ? 0 : -1);
 		return px >= 0 && py >= 0 && px < w && py < h && m[py * w + px] === 1;
 	};
-	const out: Pt[] = [];
+	const out: Vec[] = [];
 	let cx = start.x;
 	let cy = start.y;
 	// Start heading east along the top edge of the scan-order-first pixel.
@@ -233,7 +231,7 @@ function traceOuter(m: Uint8Array, w: number, h: number, start: Pt): Pt[] {
  * self-intersects or triangulation fails, retries with a smaller tolerance,
  * ending with the exact pixel outline. Returns [] rather than throwing.
  */
-function decomposeContour(contour: Pt[]): Pt[][] {
+function decomposeContour(contour: Vec[]): Vec[][] {
 	for (let tol = SIMPLIFY_TOLERANCE_PX; ; tol /= 2) {
 		const exact = tol < 0.25;
 		const poly = removeCollinear(
@@ -247,7 +245,7 @@ function decomposeContour(contour: Pt[]): Pt[][] {
 	}
 }
 
-function simplifyClosed(pts: Pt[], tol: number): Pt[] {
+function simplifyClosed(pts: Vec[], tol: number): Vec[] {
 	if (pts.length <= 3) return pts.slice();
 	let far = 1;
 	for (let i = 2; i < pts.length; i++) {
@@ -258,7 +256,7 @@ function simplifyClosed(pts: Pt[], tol: number): Pt[] {
 	return [...a.slice(0, -1), ...b.slice(0, -1)];
 }
 
-function douglasPeucker(pts: Pt[], tol: number): Pt[] {
+function douglasPeucker(pts: Vec[], tol: number): Vec[] {
 	const keep = new Uint8Array(pts.length);
 	keep[0] = 1;
 	keep[pts.length - 1] = 1;
@@ -282,7 +280,7 @@ function douglasPeucker(pts: Pt[], tol: number): Pt[] {
 	return pts.filter((_, i) => keep[i]);
 }
 
-function removeCollinear(pts: Pt[]): Pt[] {
+function removeCollinear(pts: Vec[]): Vec[] {
 	const out = pts.slice();
 	let i = 0;
 	let stable = 0;
@@ -303,7 +301,7 @@ function removeCollinear(pts: Pt[]): Pt[] {
 }
 
 /** Collinear vertices (including zero-width spikes) must already be removed. */
-function isSimple(poly: Pt[]): boolean {
+function isSimple(poly: Vec[]): boolean {
 	const n = poly.length;
 	for (let i = 0; i < n; i++) {
 		for (let j = i + 2; j < n; j++) {
@@ -317,7 +315,7 @@ function isSimple(poly: Pt[]): boolean {
 }
 
 /** Ear clipping for a simple polygon with positive area. Null on failure. */
-function earClip(poly: Pt[]): [number, number, number][] | null {
+function earClip(poly: Vec[]): [number, number, number][] | null {
 	const idx = poly.map((_, i) => i);
 	const tris: [number, number, number][] = [];
 	while (idx.length > 3) {
@@ -361,7 +359,7 @@ function earClip(poly: Pt[]): [number, number, number][] | null {
  * Merges that would exceed MAX_POLYGON_VERTICES are refused, so no piece
  * ever needs splitting afterwards.
  */
-function mergeConvex(poly: Pt[], tris: [number, number, number][]): Pt[][] {
+function mergeConvex(poly: Vec[], tris: [number, number, number][]): Vec[][] {
 	const pieces: (number[] | null)[] = tris.map((t) => [...t]);
 	const owner = new Map<string, number>();
 	const key = (a: number, b: number) => `${a},${b}`;
@@ -407,7 +405,7 @@ function mergeConvex(poly: Pt[], tris: [number, number, number][]): Pt[][] {
 		}
 	}
 
-	const out: Pt[][] = [];
+	const out: Vec[][] = [];
 	for (const piece of pieces) {
 		if (!piece) continue;
 		const pts = removeCollinear(piece.map((i) => poly[i]));
@@ -422,7 +420,7 @@ function rotateToStart(cycle: number[], first: number): number[] {
 	return [...cycle.slice(i), ...cycle.slice(0, i)];
 }
 
-function isConvexChain(poly: Pt[], cycle: number[]): boolean {
+function isConvexChain(poly: Vec[], cycle: number[]): boolean {
 	const n = cycle.length;
 	for (let i = 0; i < n; i++) {
 		const turn = cross(
@@ -435,7 +433,7 @@ function isConvexChain(poly: Pt[], cycle: number[]): boolean {
 	return true;
 }
 
-function cornerCount(poly: Pt[], cycle: number[]): number {
+function cornerCount(poly: Vec[], cycle: number[]): number {
 	const n = cycle.length;
 	let count = 0;
 	for (let i = 0; i < n; i++) {
@@ -449,8 +447,8 @@ function cornerCount(poly: Pt[], cycle: number[]): number {
 	return count;
 }
 
-function pixelCorners(m: Uint8Array, w: number, h: number): Pt[] {
-	const pts: Pt[] = [];
+function pixelCorners(m: Uint8Array, w: number, h: number): Vec[] {
+	const pts: Vec[] = [];
 	for (let y = 0; y < h; y++) {
 		for (let x = 0; x < w; x++) {
 			if (!m[y * w + x]) continue;
@@ -466,10 +464,10 @@ function pixelCorners(m: Uint8Array, w: number, h: number): Pt[] {
 }
 
 /** Monotone chain; returns the hull with positive shoelace area. */
-function convexHull(pts: Pt[]): Pt[] {
+function convexHull(pts: Vec[]): Vec[] {
 	const sorted = pts.slice().sort((a, b) => a.x - b.x || a.y - b.y);
-	const build = (list: Pt[]) => {
-		const hull: Pt[] = [];
+	const build = (list: Vec[]) => {
+		const hull: Vec[] = [];
 		for (const p of list) {
 			while (
 				hull.length >= 2 &&
@@ -502,7 +500,7 @@ function boundaryLength(m: Uint8Array, w: number, h: number): number {
 	return len;
 }
 
-function polygonArea(poly: Pt[]): number {
+function polygonArea(poly: Vec[]): number {
 	let s = 0;
 	for (let i = 0; i < poly.length; i++) {
 		const a = poly[i];
@@ -512,15 +510,15 @@ function polygonArea(poly: Pt[]): number {
 	return s / 2;
 }
 
-function cross(a: Pt, b: Pt, c: Pt): number {
+function cross(a: Vec, b: Vec, c: Vec): number {
 	return (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
 }
 
-function dist2(a: Pt, b: Pt): number {
+function dist2(a: Vec, b: Vec): number {
 	return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
 }
 
-function segmentDist2(p: Pt, a: Pt, b: Pt): number {
+function segmentDist2(p: Vec, a: Vec, b: Vec): number {
 	const vx = b.x - a.x;
 	const vy = b.y - a.y;
 	const len2 = vx * vx + vy * vy;
@@ -531,11 +529,11 @@ function segmentDist2(p: Pt, a: Pt, b: Pt): number {
 	return dist2(p, { x: a.x + t * vx, y: a.y + t * vy });
 }
 
-function orient(a: Pt, b: Pt, c: Pt): number {
+function orient(a: Vec, b: Vec, c: Vec): number {
 	return Math.sign((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x));
 }
 
-function onSegment(p: Pt, a: Pt, b: Pt): boolean {
+function onSegment(p: Vec, a: Vec, b: Vec): boolean {
 	return (
 		Math.min(a.x, b.x) <= p.x &&
 		p.x <= Math.max(a.x, b.x) &&
@@ -544,7 +542,7 @@ function onSegment(p: Pt, a: Pt, b: Pt): boolean {
 	);
 }
 
-function segmentsTouch(a: Pt, b: Pt, c: Pt, d: Pt): boolean {
+function segmentsTouch(a: Vec, b: Vec, c: Vec, d: Vec): boolean {
 	const o1 = orient(a, b, c);
 	const o2 = orient(a, b, d);
 	const o3 = orient(c, d, a);
@@ -558,6 +556,6 @@ function segmentsTouch(a: Pt, b: Pt, c: Pt, d: Pt): boolean {
 	);
 }
 
-function inClosedTriangle(p: Pt, a: Pt, b: Pt, c: Pt): boolean {
+function inClosedTriangle(p: Vec, a: Vec, b: Vec, c: Vec): boolean {
 	return cross(a, b, p) >= 0 && cross(b, c, p) >= 0 && cross(c, a, p) >= 0;
 }
