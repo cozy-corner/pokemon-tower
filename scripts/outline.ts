@@ -487,13 +487,11 @@ function boundaryLength(m: Uint8Array, w: number, h: number): number {
 }
 
 export function polygonArea(poly: Vec[]): number {
-	let s = 0;
-	for (let i = 0; i < poly.length; i++) {
-		const a = poly[i];
+	const twice = poly.reduce((s, a, i) => {
 		const b = poly[(i + 1) % poly.length];
-		s += a.x * b.y - b.x * a.y;
-	}
-	return s / 2;
+		return s + a.x * b.y - b.x * a.y;
+	}, 0);
+	return twice / 2;
 }
 
 /** Turn at b along a→b→c: positive for a left turn in positive-area winding. */
