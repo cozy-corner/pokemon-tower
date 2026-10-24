@@ -22,6 +22,17 @@
 - commit は Conventional Commits の件名のみ(本文なし)。タスクごとに1 commit。末尾に `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` を付ける。
 - 実装を始める前に `branch-workflow` スキルを呼ぶ(`superpowers:using-git-worktrees` ではなく)。
 
+## PR の分け方
+
+| PR | タスク | ブランチ | 区切りの理由 |
+|---|---|---|---|
+| 1 | Task 1〜2 | `feat/scaffold-and-fetch` | 足場と取得スクリプト |
+| 2 | Task 3〜4 | 未定 | 輪郭の計算と、輪郭を目で見るプレビュー |
+| 3 | Task 5 | 未定 | 物理の安定テスト。通らなければエンジンを見直す |
+| 4 | Task 6〜8 | 未定 | 遊べる状態。実機で確認して配り方を決める |
+
+前の PR をマージしてから次に進む。commit は1タスクにつき1つ。
+
 ## Review Focus
 
 - 複数の島に分かれるスプライト(Scarlet/Violet のリザードンの炎のような例): 小さなゴミ以外のすべての島が当たり判定に入り、落ちない。(Task 3)
@@ -33,11 +44,10 @@
 
 ---
 
-### Task 1: 足場と配り方の確認
+### Task 1: 足場
 
 **Files:**
 - Create: `package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`, `src/main.ts`, `.gitignore`
-- Modify: `docs/superpowers/specs/2026-10-24-pokemon-tower-design.md:60`
 
 **Interfaces:**
 - Produces: `npm run dev`、`npm run build`、`npm run preview`、`npm test`(Vitest)。画像の置き場 `public/sprites/`(gitignore 対象)。
@@ -47,8 +57,7 @@
 - [ ] **Step 2: `.gitignore` に `node_modules`、`dist`、`public/sprites/` を書く。**
 - [ ] **Step 3: `vite --host` と、`vite build` のあと `vite preview --host` の両方を起動し、Mac の LAN アドレスから `curl` で応答を確認する。**
   Expected: どちらも HTTP 200。
-- [ ] **Step 4: ユーザーが iPad の Safari で両方の URL を開き、どちらが安定するかを教える。** 結果を設計書の60行目に書き込む(配り方を決める)。
-- [ ] **Step 5: Commit** `chore: scaffold vite typescript project`
+- [ ] **Step 4: Commit** `chore: scaffold vite typescript project`
 
 ### Task 2: 名前一覧とスプライトの取得スクリプト
 
@@ -147,7 +156,7 @@
 **Interfaces:**
 - Produces: `export const ROTATE_STEP_DEG = 45`、`export function createControls(canvas: HTMLCanvasElement, handlers: { onMove(x: number): void; onRotate(): void; onDrop(): void }): void`。
 
-- [ ] **Step 1: テストを書く。** (a) ドラッグで `onMove` に横位置が渡る。(b) 回転ボタンで `onRotate` が呼ばれる。(c) 指を離すと `onDrop` が1回呼ばれる。(d) ドラッグ中に2本目の指が触れても、`onDrop` が余分に呼ばれず、最初の指が離れるまで続く。
+- [ ] **Step 1: テストを書く。** (a) ドラッグで `onMove` に横位置が渡る。(b) 回転ボタンで `onRotate` が呼ばれる。(c) 指を離すと `onDrop` が1回呼ばれる。(d) ドラッグ中に2本目の指が触れても、`onDrop` が余分に呼ばれず、最初の指が離れるまで続く。(e) ポインターの種類がマウスでも、(a)〜(c) と同じように動く。
 - [ ] **Step 2: テストが失敗することを確認する。**
 - [ ] **Step 3: `createControls` を実装する。** Pointer Events を使い、最初の指だけを追う。canvas に `touch-action: none`、`index.html` に `user-scalable=no` を付ける。回転ボタンは大きく、アイコンだけにする。
 - [ ] **Step 4: テストが通ることを確認する。**
@@ -168,5 +177,5 @@
 - [ ] **Step 2: テストが失敗することを確認する。**
 - [ ] **Step 3: `pickNext` と `createGame` を実装する。**
 - [ ] **Step 4: テストが通ることを確認する。**
-- [ ] **Step 5: ユーザーが iPad で実際に遊び、操作しやすさと、勝手に崩れないことを確認する。** 気づいたことは設計書の「提案」の項目に書く。
+- [ ] **Step 5: ユーザーが iPad の Safari で、`vite --host` と、`vite build` のあとの `vite preview --host` の両方を開いて遊び、どちらが安定するか、操作しやすさ、勝手に崩れないことを教える。** 配り方の結果を設計書の60行目に書き込む。気づいたことは設計書の「提案」の項目に書く。
 - [ ] **Step 6: Commit** `feat(game): add random pieces, scoring and kill line`
