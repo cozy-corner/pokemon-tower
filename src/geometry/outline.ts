@@ -23,7 +23,7 @@ type Pt = { x: number; y: number };
  */
 export function computeOutline(mask: Mask): OutlineResult {
 	const { w, h } = mask;
-	const kept = keptIslands(mask);
+	const { kept, components } = keptIslands(mask);
 	const area = kept.reduce((n, v) => n + v, 0);
 	if (area === 0) {
 		return {
@@ -37,9 +37,7 @@ export function computeOutline(mask: Mask): OutlineResult {
 	fillHoles(solid, w, h);
 
 	const polygons: Vec[][] = [];
-	let components = 0;
 	for (const start of islandStarts(solid, w, h)) {
-		components++;
 		const contour = traceOuter(solid, w, h, start);
 		for (const piece of decomposeContour(contour)) {
 			polygons.push(
@@ -63,13 +61,18 @@ export function computeOutline(mask: Mask): OutlineResult {
 	};
 }
 
-/** Thresholded mask with 8-connected islands smaller than MIN_ISLAND_PX removed. */
-function keptIslands(mask: Mask): Uint8Array {
+/**
+ * Thresholded mask with 8-connected islands smaller than MIN_ISLAND_PX
+ * removed, and the number of islands kept. Counted before the fills so an
+ * island inside another's hole, or one the saddle fill bridges, still counts.
+ */
+function keptIslands(mask: Mask): { kept: Uint8Array; components: number } {
 	const { alpha, w, h } = mask;
 	const out = new Uint8Array(w * h);
 	const seen = new Uint8Array(w * h);
 	const stack: number[] = [];
 	const island: number[] = [];
+	let components = 0;
 	for (let i = 0; i < w * h; i++) {
 		if (seen[i] || alpha[i] <= ALPHA_THRESHOLD) continue;
 		island.length = 0;
@@ -93,10 +96,11 @@ function keptIslands(mask: Mask): Uint8Array {
 			}
 		}
 		if (island.length >= MIN_ISLAND_PX) {
+			components++;
 			for (const j of island) out[j] = 1;
 		}
 	}
-	return out;
+	return { kept: out, components };
 }
 
 /**
