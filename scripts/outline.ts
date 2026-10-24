@@ -232,17 +232,23 @@ function traceOuter(m: Uint8Array, w: number, h: number, start: Vec): Vec[] {
  * ending with the exact pixel outline. Returns [] rather than throwing.
  */
 function decomposeContour(contour: Vec[]): Vec[][] {
-	for (let tol = SIMPLIFY_TOLERANCE_PX; ; tol /= 2) {
-		const exact = tol < 0.25;
+	// null = the exact pixel outline, which is always simple.
+	const ladder = [
+		SIMPLIFY_TOLERANCE_PX,
+		SIMPLIFY_TOLERANCE_PX / 2,
+		SIMPLIFY_TOLERANCE_PX / 4,
+		null,
+	];
+	for (const tol of ladder) {
 		const poly = removeCollinear(
-			exact ? contour : simplifyClosed(contour, tol),
+			tol === null ? contour : simplifyClosed(contour, tol),
 		);
 		if (poly.length >= 3 && polygonArea(poly) > 0 && isSimple(poly)) {
 			const triangles = earClip(poly);
 			if (triangles) return mergeConvex(poly, triangles);
 		}
-		if (exact) return [];
 	}
+	return [];
 }
 
 function simplifyClosed(pts: Vec[], tol: number): Vec[] {
