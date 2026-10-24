@@ -207,11 +207,7 @@ describe("createWorld", () => {
 			"klefki",
 			...mostPieces,
 			...sorted.filter((_, i) => i % 40 === 0),
-		]
-			// ferroseed is a polygonal ball: alone on a flat pedestal it rolls
-			// off, which is geometry, not instability.
-			.filter((name, i, names) => names.indexOf(name) === i)
-			.filter((name) => name !== "ferroseed");
+		].filter((name, i, names) => names.indexOf(name) === i);
 		// The slowest of all 1025 sprites took 17.5 s to sleep (it rocks first).
 		const SLEEP_WITHIN_S = 20;
 
