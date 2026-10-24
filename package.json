@@ -18,9 +18,10 @@
 		"dev": "vite",
 		"build": "vite build",
 		"preview": "vite preview",
-		"test": "vitest run --passWithNoTests",
+		"fetch-sprites": "bun scripts/fetch-sprites.ts",
+		"test": "vitest run",
 		"lint": "biome ci .",
 		"fmt": "biome check --write .",
-		"check": "biome ci . && tsc --noEmit && vitest run --passWithNoTests"
+		"check": "biome ci . && tsc --noEmit && vitest run"
 	}
 }
