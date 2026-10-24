@@ -168,10 +168,16 @@ describe("createWorld", () => {
 			x,
 			angle,
 		}));
-		const { standing, moved } = dropAndWatch(drops, {
+		const { world, standing, moved } = dropAndWatch(drops, {
 			pedestalHalfWidth: 3,
 			pedestalThickness: 1,
 		});
+		const bulbasaur = world.pieces().find((p) => p.id === "bulbasaur");
+		// +y is down, so below the pedestal top means a larger y.
+		expect(
+			bulbasaur?.y,
+			"the pin expects bulbasaur to fall off the pedestal",
+		).toBeGreaterThan(PEDESTAL_TOP_Y);
 		expect(standing.map((p) => p.id)).toEqual(
 			placements.slice(1).map(([id]) => id),
 		);
