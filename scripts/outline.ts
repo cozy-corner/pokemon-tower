@@ -410,13 +410,10 @@ function mergeConvex(poly: Vec[], tris: [number, number, number][]): Vec[][] {
 		}
 	}
 
-	const out: Vec[][] = [];
-	for (const piece of pieces) {
-		if (!piece) continue;
-		const pts = removeCollinear(piece.map((i) => poly[i]));
-		if (pts.length >= 3 && polygonArea(pts) > 0) out.push(pts);
-	}
-	return out;
+	return pieces
+		.filter((piece) => piece !== null)
+		.map((piece) => removeCollinear(piece.map((i) => poly[i])))
+		.filter((pts) => pts.length >= 3 && polygonArea(pts) > 0);
 }
 
 /** Rotates a cyclic list so it starts at `first` (and therefore ends just before it wraps). */
