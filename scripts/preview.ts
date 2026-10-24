@@ -15,9 +15,19 @@ canvas.height = SIZE * SCALE;
 
 const flaggedMap: Record<string, string[]> = flagged;
 const excluded = new Set<string>(exclusions);
-const shapes: Record<string, OutlineResult> = await (
-	await fetch("/shapes.json")
-).json();
+async function loadShapes(): Promise<Record<string, OutlineResult>> {
+	try {
+		const res = await fetch("/shapes.json");
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		return await res.json();
+	} catch {
+		const message = "shapes.json not found: run bun run build-shapes";
+		el("name").textContent = message;
+		// Throwing stops the rest of the module from wiring up a dead page.
+		throw new Error(message);
+	}
+}
+const shapes = await loadShapes();
 
 el("names").replaceChildren(
 	...names.map((n) =>
