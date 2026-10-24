@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { OutlineResult } from "../src/geometry/types";
 import {
 	buildShapes,
+	exitCode,
 	flagReasons,
 	isValidPiece,
 	roundResult,
@@ -131,5 +132,13 @@ describe("isValidPiece", () => {
 			y: Math.sin((i / 13) * 2 * Math.PI),
 		}));
 		expect(isValidPiece(ring)).toBe(false);
+	});
+});
+
+describe("exitCode", () => {
+	it("is 0 only when nothing was skipped or invalid", () => {
+		expect(exitCode({ skipped: [], invalid: [] })).toBe(0);
+		expect(exitCode({ skipped: ["a"], invalid: [] })).toBe(1);
+		expect(exitCode({ skipped: [], invalid: ["b"] })).toBe(1);
 	});
 });

@@ -52,6 +52,13 @@ export function isValidPiece(poly: Vec[]): boolean {
 	);
 }
 
+export function exitCode(run: {
+	skipped: string[];
+	invalid: string[];
+}): number {
+	return run.skipped.length > 0 || run.invalid.length > 0 ? 1 : 0;
+}
+
 export function buildShapes(
 	names: string[],
 	loadMask: (name: string) => Mask | null,
@@ -155,10 +162,8 @@ async function main(): Promise<void> {
 	);
 	console.log(`time: ${((performance.now() - started) / 1000).toFixed(1)}s`);
 	if (skipped.length > 0) console.log(`skipped names: ${skipped.join(", ")}`);
-	if (invalid.length > 0) {
-		console.log(`invalid names: ${invalid.join(", ")}`);
-		process.exitCode = 1;
-	}
+	if (invalid.length > 0) console.log(`invalid names: ${invalid.join(", ")}`);
+	process.exitCode = exitCode({ skipped, invalid });
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) await main();
