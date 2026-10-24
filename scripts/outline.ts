@@ -435,24 +435,18 @@ function turns(poly: Vec[], cycle: number[]): number[] {
  * hull of a union of pixel squares depends only on these.
  */
 function rowExtremeCorners(m: Uint8Array, w: number, h: number): Vec[] {
-	const pts: Vec[] = [];
-	for (let y = 0; y < h; y++) {
-		let left = -1;
-		let right = -1;
-		for (let x = 0; x < w; x++) {
-			if (!m[y * w + x]) continue;
-			if (left < 0) left = x;
-			right = x;
-		}
-		if (left < 0) continue;
-		pts.push(
+	return Array.from({ length: h }, (_, y) => y).flatMap((y) => {
+		const row = m.subarray(y * w, (y + 1) * w);
+		const left = row.indexOf(1);
+		if (left < 0) return [];
+		const right = row.lastIndexOf(1) + 1;
+		return [
 			{ x: left, y },
 			{ x: left, y: y + 1 },
-			{ x: right + 1, y },
-			{ x: right + 1, y: y + 1 },
-		);
-	}
-	return pts;
+			{ x: right, y },
+			{ x: right, y: y + 1 },
+		];
+	});
 }
 
 /** Monotone chain; returns the hull with positive shoelace area. */
