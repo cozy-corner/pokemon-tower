@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import { PIXELS_PER_METER, type Vec } from "../src/geometry/types";
 import {
 	computeOutline,
+	cross,
 	MAX_POLYGON_VERTICES,
 	type Mask,
 	MIN_ISLAND_PX,
+	polygonArea,
 	THIN_THICKNESS_PX,
 } from "./outline";
 
@@ -28,25 +30,16 @@ function fillRect(
 	}
 }
 
-function signedArea(poly: Vec[]): number {
-	let s = 0;
-	for (let i = 0; i < poly.length; i++) {
-		const a = poly[i];
-		const b = poly[(i + 1) % poly.length];
-		s += a.x * b.y - b.x * a.y;
-	}
-	return s / 2;
-}
-
 function isStrictlyConvex(poly: Vec[]): boolean {
 	let sign = 0;
 	for (let i = 0; i < poly.length; i++) {
-		const a = poly[i];
-		const b = poly[(i + 1) % poly.length];
-		const c = poly[(i + 2) % poly.length];
-		const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
-		if (Math.abs(cross) < 1e-12) return false;
-		const s = Math.sign(cross);
+		const turn = cross(
+			poly[i],
+			poly[(i + 1) % poly.length],
+			poly[(i + 2) % poly.length],
+		);
+		if (Math.abs(turn) < 1e-12) return false;
+		const s = Math.sign(turn);
 		if (sign === 0) sign = s;
 		else if (s !== sign) return false;
 	}
@@ -58,7 +51,7 @@ function expectValidPolygons(polygons: Vec[][]): void {
 		expect(poly.length).toBeGreaterThanOrEqual(3);
 		expect(poly.length).toBeLessThanOrEqual(MAX_POLYGON_VERTICES);
 		expect(isStrictlyConvex(poly)).toBe(true);
-		expect(signedArea(poly)).toBeGreaterThan(0);
+		expect(polygonArea(poly)).toBeGreaterThan(0);
 	}
 }
 
@@ -66,12 +59,12 @@ function expectValidPolygons(polygons: Vec[][]): void {
 function containsPoint(poly: Vec[], p: Vec): boolean {
 	return poly.every((a, i) => {
 		const b = poly[(i + 1) % poly.length];
-		return (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x) >= 0;
+		return cross(a, b, p) >= 0;
 	});
 }
 
 function totalArea(polygons: Vec[][]): number {
-	return polygons.reduce((sum, p) => sum + signedArea(p), 0);
+	return polygons.reduce((sum, p) => sum + polygonArea(p), 0);
 }
 
 const PX2 = PIXELS_PER_METER * PIXELS_PER_METER;

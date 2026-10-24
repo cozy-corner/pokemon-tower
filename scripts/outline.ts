@@ -500,7 +500,7 @@ function boundaryLength(m: Uint8Array, w: number, h: number): number {
 	return len;
 }
 
-function polygonArea(poly: Vec[]): number {
+export function polygonArea(poly: Vec[]): number {
 	let s = 0;
 	for (let i = 0; i < poly.length; i++) {
 		const a = poly[i];
@@ -510,7 +510,8 @@ function polygonArea(poly: Vec[]): number {
 	return s / 2;
 }
 
-function cross(a: Vec, b: Vec, c: Vec): number {
+/** Turn at b along a→b→c: positive for a left turn in positive-area winding. */
+export function cross(a: Vec, b: Vec, c: Vec): number {
 	return (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
 }
 
@@ -530,7 +531,7 @@ function segmentDist2(p: Vec, a: Vec, b: Vec): number {
 }
 
 function orient(a: Vec, b: Vec, c: Vec): number {
-	return Math.sign((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x));
+	return Math.sign(cross(a, b, c));
 }
 
 function onSegment(p: Vec, a: Vec, b: Vec): boolean {
