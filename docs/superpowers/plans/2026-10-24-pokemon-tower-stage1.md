@@ -24,7 +24,7 @@
 
 ## Review Focus
 
-- 複数の島に分かれるスプライト(Scarlet/Violet のリザードンの炎のような例): 最大の島だけを使い、落ちない。(Task 3)
+- 複数の島に分かれるスプライト(Scarlet/Violet のリザードンの炎のような例): 小さなゴミ以外のすべての島が当たり判定に入り、落ちない。(Task 3)
 - 簡略化後に3頂点未満、または分解後に Planck の頂点数の上限を超える多角形が出ても、落ちずに除外か分割になる。(Task 3)
 - 台座から落ちたポケモンを消しても、ゲームが終わらず、積めた数に数えない。(Task 8)
 - 不規則な形を積んで30秒置いても、動かない。(Task 5)
@@ -42,6 +42,7 @@
 **Interfaces:**
 - Produces: `npm run dev`、`npm run build`、`npm run preview`、`npm test`(Vitest)。画像の置き場 `public/sprites/`(gitignore 対象)。
 
+- [ ] **Step 0: Planck.js で、1つの剛体に、離れた複数の形(fixture)を持たせられることを、公式ドキュメントと小さな動作確認で確かめる。** 持たせられなければ、Task 3 の方針をユーザーに相談する。
 - [ ] **Step 1: Vite(TypeScript テンプレート)、Vitest、Planck.js、pngjs を入れる。** Planck.js が公開している頂点数の上限(`Settings.maxPolygonVertices` に相当する値)を、Planck.js の公式ドキュメントで確認して、Task 3 の定数に使う。
 - [ ] **Step 2: `.gitignore` に `node_modules`、`dist`、`public/sprites/` を書く。**
 - [ ] **Step 3: `vite --host` と、`vite build` のあと `vite preview --host` の両方を起動し、Mac の LAN アドレスから `curl` で応答を確認する。**
@@ -79,11 +80,12 @@
   - `type OutlineResult = { polygons: Vec[][]; stats: { components: number; fillOverHull: number; thin: boolean } }`
   - `export const PIXELS_PER_METER = 32`(ピクセルをメートルにする倍率。ピクセルをそのままメートルにすると物理が不安定になる)
   - `export const SIMPLIFY_TOLERANCE_PX = 1.5`(初期値。Task 4 のプレビューを見て調整)
+  - `export const MIN_ISLAND_PX = 20`(これより小さい島はゴミとして無視する。調査で「小さい」とした画素数)
   - `export function computeOutline(mask: Mask): OutlineResult`(多角形の座標はメートルで、中心を原点にする)
 
-- [ ] **Step 1: 合成マスクでテストを書く。** (a) 8×8の塗りつぶし正方形 → 多角形1つ、頂点4、`components` は1。(b) L字 → 凸多角形に分かれ、各多角形の頂点数は上限以下。(c) 離れた2つの島(大小) → `components` は2で、大きいほうだけが多角形になる。(d) 中に穴のある四角 → 穴は無視されて外側だけ。(e) アルファが127以下の画素は無視する。
+- [ ] **Step 1: 合成マスクでテストを書く。** (a) 8×8の塗りつぶし正方形 → 多角形1つ、頂点4、`components` は1。(b) L字 → 凸多角形に分かれ、各多角形の頂点数は上限以下。(c) 離れた2つの島(どちらも `MIN_ISLAND_PX` 以上) → `components` は2で、両方の島の多角形が返る。(c2) 大きな島と、`MIN_ISLAND_PX` 未満の島 → 大きな島の多角形だけが返る。(d) 中に穴のある四角 → 穴は無視されて外側だけ。(e) アルファが127以下の画素は無視する。
 - [ ] **Step 2: テストが失敗することを確認する。**
-- [ ] **Step 3: `computeOutline` を実装する。** 手順は、アルファ127超でマスク化、連結成分のうち最大のものだけ残す、外側の輪郭をたどる、Douglas-Peucker で簡略化、凸多角形へ分解、Planck の頂点数の上限(Task 1 で確認した値)を超えたものを分ける。分解は `poly-decomp` などのライブラリを使ってよい。
+- [ ] **Step 3: `computeOutline` を実装する。** 手順は、アルファ127超でマスク化、`MIN_ISLAND_PX` 未満の連結成分を捨てる、残った島ごとに外側の輪郭をたどる、Douglas-Peucker で簡略化、凸多角形へ分解、Planck の頂点数の上限(Task 1 で確認した値)を超えたものを分ける。分解は `poly-decomp` などのライブラリを使ってよい。
 - [ ] **Step 4: テストが通ることを確認する。**
 - [ ] **Step 5: Commit** `feat(geometry): compute convex outline from sprite alpha`
 
@@ -111,7 +113,7 @@
 - Test: `src/physics/world.test.ts`
 
 **Interfaces:**
-- Consumes: `OutlineResult`(Task 3)
+- Consumes: `OutlineResult`(Task 3)。`polygons` の全部が、1つの剛体の fixture になる。
 - Produces: `export function createWorld(): World`、`World` は `{ addPiece(id: string, polygons: Vec[][], x: number, angle: number): Piece; step(dt: number): void; pieces(): Piece[]; remove(piece: Piece): void }`。`Piece` は `{ id: string; x: number; y: number; angle: number; asleep: boolean }`。台座は世界に固定で入っている。
 
 - [ ] **Step 1: 30秒の安定テストを書く。** 実際の形に近い不規則な多角形(L字などの合成形)10個を台座に積み、60Hz で30秒進める。5秒時点と30秒時点で、全部の位置の差が 0.01m 未満。
