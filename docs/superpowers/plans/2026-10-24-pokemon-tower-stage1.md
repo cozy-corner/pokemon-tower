@@ -6,7 +6,7 @@
 
 **Architecture:** スプライトのアルファ値から外側の輪郭を取り、凸多角形に分けて Planck.js の剛体にする。輪郭の計算は事前にスクリプトで全1025種類について行い、`shapes.json` に保存する。ゲームは canvas 2D で描き、ポインター操作で位置と回転を決めて落とす。
 
-**Tech Stack:** TypeScript、Vite、Vitest、Planck.js、pngjs(Node 側の PNG 読み込み)。Node v26.12.0、npm 11.20.0 を確認済み。
+**Tech Stack:** TypeScript、bun(パッケージ管理とスクリプト実行。bun 1.3.9 を確認済み)、Vite、Vitest、Biome(lint と format)、Planck.js、pngjs(PNG 読み込み)、GitHub Actions(CI)。
 
 **Spec:** `docs/superpowers/specs/2026-10-24-pokemon-tower-design.md`
 
@@ -20,18 +20,20 @@
 - ひとり用は落ちても終わらない。積めた数と高さを記録する。落とすポケモンはランダム。入れ替えボタンは作らない。
 - 「勝手に崩れない」の基準: 何も触らずに30秒置いて動かない。満たせなければ別の物理エンジンを検討する。
 - commit は Conventional Commits の件名のみ(本文なし)。タスクごとに1 commit。末尾に `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` を付ける。
+- パッケージ管理とスクリプト実行は bun。`npm` は使わない。commit の前に `bun run check` が通ること。
 - 実装を始める前に `branch-workflow` スキルを呼ぶ(`superpowers:using-git-worktrees` ではなく)。
 
 ## PR の分け方
 
 | PR | タスク | ブランチ | 区切りの理由 |
 |---|---|---|---|
-| 1 | Task 1〜2 | `feat/scaffold-and-fetch` | 足場と取得スクリプト |
-| 2 | Task 3〜4 | 未定 | 輪郭の計算と、輪郭を目で見るプレビュー |
-| 3 | Task 5 | 未定 | 物理の安定テスト。通らなければエンジンを見直す |
-| 4 | Task 6〜8 | 未定 | 遊べる状態。実機で確認して配り方を決める |
+| 1 | Task 1 | `chore/foundation` | 土台(bun、lint、format、テスト、CI、PR テンプレート) |
+| 2 | Task 2 | 未定 | 名前一覧と取得スクリプト |
+| 3 | Task 3〜4 | 未定 | 輪郭の計算と、輪郭を目で見るプレビュー |
+| 4 | Task 5 | 未定 | 物理の安定テスト。通らなければエンジンを見直す |
+| 5 | Task 6〜8 | 未定 | 遊べる状態。実機で確認して配り方を決める |
 
-前の PR をマージしてから次に進む。commit は1タスクにつき1つ。
+前の PR をマージしてから次に進む。commit は1タスクにつき1つ。土台(PR 1)が入るまで、機能の実装は始めない。
 
 ## Review Focus
 
@@ -44,20 +46,27 @@
 
 ---
 
-### Task 1: 足場
+### Task 1: 土台
 
 **Files:**
-- Create: `package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`, `src/main.ts`, `.gitignore`
+- Create: `package.json`、`bun.lock`、`tsconfig.json`、`vite.config.ts`、`index.html`、`src/main.ts`、`.gitignore`、`biome.json`、`.github/workflows/ci.yml`、`.github/pull_request_template.md`
+- Modify: `.githooks/pre-commit`
 
 **Interfaces:**
-- Produces: `npm run dev`、`npm run build`、`npm run preview`、`npm test`(Vitest)。画像の置き場 `public/sprites/`(gitignore 対象)。
+- Produces: `bun run dev`、`bun run build`、`bun run preview`、`bun run test`(Vitest)、`bun run lint`(Biome)、`bun run fmt`(Biome で整形)、`bun run check`(Biome の検査、`tsc --noEmit`、Vitest をまとめて実行)。画像の置き場 `public/sprites/`(gitignore 対象)。
 
-- [ ] **Step 0: Planck.js で、1つの剛体に、離れた複数の形(fixture)を持たせられることを、公式ドキュメントと小さな動作確認で確かめる。** 持たせられなければ、Task 3 の方針をユーザーに相談する。
-- [ ] **Step 1: Vite(TypeScript テンプレート)、Vitest、Planck.js、pngjs を入れる。** Planck.js が公開している頂点数の上限(`Settings.maxPolygonVertices` に相当する値)を、Planck.js の公式ドキュメントで確認して、Task 3 の定数に使う。
+- [ ] **Step 0: Planck.js で、1つの剛体に、離れた複数の形(fixture)を持たせられることを、公式ドキュメントと小さな動作確認で確かめる。** 持たせられなければ、Task 3 の方針をユーザーに相談する。(以前の試作で、Planck.js 1.5.1 では持たせられ、`Settings.maxPolygonVertices` は 12 だった。`node_modules` の `planck.d.ts` で再確認する)
+- [ ] **Step 1: Vite(TypeScript テンプレート)、Vitest、Planck.js、pngjs を `bun add` で入れる。** `tsx` は入れない(bun が TypeScript を直接実行する)。
 - [ ] **Step 2: `.gitignore` に `node_modules`、`dist`、`public/sprites/` を書く。**
-- [ ] **Step 3: `vite --host` と、`vite build` のあと `vite preview --host` の両方を起動し、Mac の LAN アドレスから `curl` で応答を確認する。**
-  Expected: どちらも HTTP 200。
-- [ ] **Step 4: Commit** `chore: scaffold vite typescript project`
+- [ ] **Step 3: Biome を入れ、`biome.json` に推奨の lint と format を設定する。** 上のスクリプトを `package.json` に書く。`bun run check` は、Biome の検査(`biome ci .`)、`tsc --noEmit`、`vitest run --passWithNoTests` の順に実行して、1つでも失敗したら失敗にする。
+- [ ] **Step 4: `.githooks/pre-commit` に、画像のガードの後、staged のファイルに Biome の検査(`biome check --staged`)をかける。** 画像のガードは今のまま残す。
+- [ ] **Step 5: `.github/workflows/ci.yml` を書く。** `pull_request` と `main` への `push` で動き、bun を入れ、`bun install --frozen-lockfile` のあと、`bun run check` と `bun run build` を実行する。使う Action のバージョンは、各 Action の公式 README で確認して固定する。
+- [ ] **Step 6: `.github/pull_request_template.md` を書く。** 項目は「概要」と、確認の欄(`bun run check` が通る、画像ファイルを含めていない)の2つだけにする。
+- [ ] **Step 7: 動作を確認する。**
+  - `bun run check` と `bun run build` が通る。
+  - 意図的に lint エラーを入れたファイルを staged にして commit すると、フックが止める(確認後に元に戻す)。
+  - `bun run dev` と、`bun run build` のあとの `bun run preview` の両方を起動し、Mac の LAN アドレスから `curl` で HTTP 200 を確認する。どちらも `--host` で他の端末から開けること。
+- [ ] **Step 8: Commit** `chore: set up bun, biome, ci and pr template`
 
 ### Task 2: 名前一覧とスプライトの取得スクリプト
 
@@ -72,7 +81,7 @@
 - [ ] **Step 2: テストが失敗することを確認する。**
 - [ ] **Step 3: `parseNames` を実装する。** 正規表現は `href="/sprites/[a-z0-9-]*"`(調査で1025件取れた)。
 - [ ] **Step 4: `fetchSprites` を実装する。** User-Agent を付け、1件ごとに0.1秒待つ。取れなかった名前は `failed` に入れて続ける。すでにある画像は取り直さない(再実行できる)。
-- [ ] **Step 5: 実行して `data/names.json` を作る。** `npm run fetch-sprites` を実行する。
+- [ ] **Step 5: 実行して `data/names.json` を作る。** `bun run fetch-sprites` を実行する。
   Expected: 1025件が `ok`、`failed` は空。
 - [ ] **Step 6: Commit** `feat(scripts): add sprite fetch script`
 
