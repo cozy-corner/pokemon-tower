@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -32,7 +32,10 @@ export async function fetchSprites(
 		try {
 			const res = await fetch(`${IMAGE_URL}/${name}.png`, { headers: HEADERS });
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			await writeFile(path, new Uint8Array(await res.arrayBuffer()));
+			// Rename after a complete write so an interrupted run never leaves a partial .png that the skip check would trust.
+			const tmpPath = `${path}.part`;
+			await writeFile(tmpPath, new Uint8Array(await res.arrayBuffer()));
+			await rename(tmpPath, path);
 			ok.push(name);
 		} catch {
 			failed.push(name);
