@@ -1,9 +1,4 @@
 #!/bin/sh
-# 公開リポジトリにスプライト等の画像を入れない(権利の都合)
-bad=$(git diff --cached --name-only --diff-filter=ACMR | grep -Ei '\.(png|jpe?g|gif|webp|bmp|avif|ico|svg)$|(^|/)public/sprites/')
-if [ -n "$bad" ]; then
-  echo "画像は commit できません:" >&2
-  echo "$bad" >&2
-  exit 1
-fi
+# 公開リポジトリにスプライト等の画像を入れない(権利の都合)。判定は scripts/guard-images.sh
+git diff --cached --name-only --diff-filter=ACMR | scripts/guard-images.sh || exit 1
 bunx biome check --staged --no-errors-on-unmatched
