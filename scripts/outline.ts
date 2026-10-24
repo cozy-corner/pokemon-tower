@@ -527,17 +527,18 @@ function onSegment(p: Vec, a: Vec, b: Vec): boolean {
 	);
 }
 
-function segmentsTouch(a: Vec, b: Vec, c: Vec, d: Vec): boolean {
-	const o1 = orient(a, b, c);
-	const o2 = orient(a, b, d);
-	const o3 = orient(c, d, a);
-	const o4 = orient(c, d, b);
+/** Whether segment p1–p2 and segment q1–q2 intersect or touch. */
+function segmentsTouch(p1: Vec, p2: Vec, q1: Vec, q2: Vec): boolean {
+	const o1 = orient(p1, p2, q1);
+	const o2 = orient(p1, p2, q2);
+	const o3 = orient(q1, q2, p1);
+	const o4 = orient(q1, q2, p2);
 	if (o1 !== o2 && o3 !== o4) return true;
 	return (
-		(o1 === 0 && onSegment(c, a, b)) ||
-		(o2 === 0 && onSegment(d, a, b)) ||
-		(o3 === 0 && onSegment(a, c, d)) ||
-		(o4 === 0 && onSegment(b, c, d))
+		(o1 === 0 && onSegment(q1, p1, p2)) ||
+		(o2 === 0 && onSegment(q2, p1, p2)) ||
+		(o3 === 0 && onSegment(p1, q1, q2)) ||
+		(o4 === 0 && onSegment(p2, q1, q2))
 	);
 }
 
