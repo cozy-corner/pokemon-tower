@@ -365,7 +365,7 @@ function earClip(poly: Vec[]): [number, number, number][] | null {
 function mergeConvex(poly: Vec[], tris: [number, number, number][]): Vec[][] {
 	const pieces: (number[] | null)[] = tris.map((t) => [...t]);
 	const owner = new Map<string, number>();
-	const key = (a: number, b: number) => `${a},${b}`;
+	const key = (from: number, to: number) => `${from},${to}`;
 	const register = (p: number) => {
 		const piece = pieces[p] as number[];
 		for (let i = 0; i < piece.length; i++) {
