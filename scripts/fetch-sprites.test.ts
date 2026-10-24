@@ -3,7 +3,7 @@ import { mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchSprites, parseNames } from "./fetch-sprites";
+import { assertNotShrinking, fetchSprites, parseNames } from "./fetch-sprites";
 
 describe("parseNames", () => {
 	it("extracts a name from a sprite link", () => {
@@ -22,6 +22,22 @@ describe("parseNames", () => {
 			'<a href="/sprites/type/fire">y</a>',
 		].join("");
 		expect(parseNames(html)).toEqual(["bulbasaur", "mr-mime"]);
+	});
+});
+
+describe("assertNotShrinking", () => {
+	it("throws on an empty list", () => {
+		expect(() => assertNotShrinking(["a"], [])).toThrow();
+	});
+
+	it("throws when the new list is shorter", () => {
+		expect(() => assertNotShrinking(["a", "b"], ["a"])).toThrow();
+	});
+
+	it("passes for equal or longer lists", () => {
+		expect(() => assertNotShrinking(["a"], ["a"])).not.toThrow();
+		expect(() => assertNotShrinking(["a"], ["a", "b"])).not.toThrow();
+		expect(() => assertNotShrinking([], ["a"])).not.toThrow();
 	});
 });
 
