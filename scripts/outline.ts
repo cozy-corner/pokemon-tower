@@ -164,29 +164,39 @@ function fillHoles(m: Uint8Array, w: number, h: number): void {
 function islandStarts(m: Uint8Array, w: number, h: number): Vec[] {
 	const seen = new Uint8Array(w * h);
 	const starts: Vec[] = [];
-	const stack: number[] = [];
 	for (let i = 0; i < w * h; i++) {
 		if (!m[i] || seen[i]) continue;
 		starts.push({ x: i % w, y: Math.floor(i / w) });
-		seen[i] = 1;
-		stack.push(i);
-		while (stack.length > 0) {
-			const j = stack.pop() as number;
-			const x = j % w;
-			const y = (j - x) / w;
-			const visit = (k: number) => {
-				if (m[k] && !seen[k]) {
-					seen[k] = 1;
-					stack.push(k);
-				}
-			};
-			if (x > 0) visit(j - 1);
-			if (x + 1 < w) visit(j + 1);
-			if (y > 0) visit(j - w);
-			if (y + 1 < h) visit(j + w);
-		}
+		markIsland4(m, w, h, seen, i);
 	}
 	return starts;
+}
+
+/** Marks every solid pixel 4-connected to `start` in `seen`. */
+function markIsland4(
+	m: Uint8Array,
+	w: number,
+	h: number,
+	seen: Uint8Array,
+	start: number,
+): void {
+	const stack = [start];
+	seen[start] = 1;
+	const visit = (k: number) => {
+		if (m[k] && !seen[k]) {
+			seen[k] = 1;
+			stack.push(k);
+		}
+	};
+	while (stack.length > 0) {
+		const j = stack.pop() as number;
+		const x = j % w;
+		const y = (j - x) / w;
+		if (x > 0) visit(j - 1);
+		if (x + 1 < w) visit(j + 1);
+		if (y > 0) visit(j - w);
+		if (y + 1 < h) visit(j + w);
+	}
 }
 
 /**
