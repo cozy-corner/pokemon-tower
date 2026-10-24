@@ -485,19 +485,40 @@ function convexHull(pts: Vec[]): Vec[] {
 
 /** Count of pixel edges between the mask and anything outside it (holes included). */
 function boundaryLength(m: Uint8Array, w: number, h: number): number {
-	const at = (x: number, y: number) =>
-		x >= 0 && y >= 0 && x < w && y < h && m[y * w + x] === 1;
 	let len = 0;
 	for (let y = 0; y < h; y++) {
 		for (let x = 0; x < w; x++) {
-			if (!at(x, y)) continue;
-			if (!at(x - 1, y)) len++;
-			if (!at(x + 1, y)) len++;
-			if (!at(x, y - 1)) len++;
-			if (!at(x, y + 1)) len++;
+			if (isSolidPixel(m, w, h, x, y)) len += exposedSides(m, w, h, x, y);
 		}
 	}
 	return len;
+}
+
+/** Out-of-image pixels count as empty. */
+function isSolidPixel(
+	m: Uint8Array,
+	w: number,
+	h: number,
+	x: number,
+	y: number,
+): boolean {
+	return x >= 0 && y >= 0 && x < w && y < h && m[y * w + x] === 1;
+}
+
+/** How many of the pixel's 4 neighbours are empty. */
+function exposedSides(
+	m: Uint8Array,
+	w: number,
+	h: number,
+	x: number,
+	y: number,
+): number {
+	return (
+		Number(!isSolidPixel(m, w, h, x - 1, y)) +
+		Number(!isSolidPixel(m, w, h, x + 1, y)) +
+		Number(!isSolidPixel(m, w, h, x, y - 1)) +
+		Number(!isSolidPixel(m, w, h, x, y + 1))
+	);
 }
 
 export function polygonArea(poly: Vec[]): number {
