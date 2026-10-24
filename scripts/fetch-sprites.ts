@@ -10,8 +10,8 @@ const DELAY_MS = 100;
 
 export function parseNames(html: string): string[] {
 	const names = new Set<string>();
-	for (const m of html.matchAll(/href="\/sprites\/([a-z0-9-]*)"/g)) {
-		if (m[1]) names.add(m[1]);
+	for (const m of html.matchAll(/href="\/sprites\/([a-z0-9-]+)"/g)) {
+		names.add(m[1]);
 	}
 	return [...names].sort();
 }
