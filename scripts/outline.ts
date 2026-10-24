@@ -1,3 +1,4 @@
+import { Settings } from "planck";
 import {
 	type OutlineResult,
 	PIXELS_PER_METER,
@@ -8,8 +9,7 @@ export type Mask = { alpha: Uint8Array; w: number; h: number };
 export const SIMPLIFY_TOLERANCE_PX = 1.5;
 export const MIN_ISLAND_PX = 20;
 export const THIN_THICKNESS_PX = 8;
-// Mirrors planck's Settings.maxPolygonVertices (1.5.1); a test keeps them in sync.
-export const MAX_POLYGON_VERTICES = 12;
+export const MAX_POLYGON_VERTICES = Settings.maxPolygonVertices;
 
 const ALPHA_THRESHOLD = 127;
 
