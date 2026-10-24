@@ -3,6 +3,7 @@ import shapes from "../../public/shapes.json";
 import type { OutlineResult, Vec } from "../geometry/types";
 import {
 	createWorld,
+	PEDESTAL_HALF_WIDTH,
 	PEDESTAL_TOP_Y,
 	type Piece,
 	SPAWN_CLEARANCE,
@@ -201,4 +202,41 @@ describe("createWorld", () => {
 		);
 		expect(moved).toEqual([]);
 	}, 30_000);
+
+	describe("a real sprite dropped alone", () => {
+		const all = shapes as Record<string, OutlineResult>;
+		const sorted = Object.keys(all).sort();
+		const mostPieces = [...sorted]
+			.sort((a, b) => all[b].polygons.length - all[a].polygons.length)
+			.slice(0, 6);
+		// ferroseed is a polygonal ball: alone on a flat pedestal it rolls off,
+		// which is geometry, not instability.
+		const rollsOff = new Set(["ferroseed"]);
+		const sample = [
+			...new Set([
+				...["pikachu", "abomasnow", "ambipom", "arbok", "amoonguss"],
+				...["snorlax", "charizard", "klefki"],
+				...mostPieces,
+				...sorted.filter((_, i) => i % 40 === 0),
+			]),
+		].filter((name) => !rollsOff.has(name));
+		// The slowest of all 1025 sprites took 17.5 s to sleep (it rocks first).
+		const SLEEP_WITHIN_S = 20;
+
+		it.each(sample)("%s comes to rest on the pedestal and stays", (name) => {
+			const world = createWorld();
+			const piece = world.addPiece(name, all[name].polygons, 0, 0);
+			run(world, SLEEP_WITHIN_S, () => piece.asleep);
+			expect(piece.asleep).toBe(true);
+			const rest = { x: piece.x, y: piece.y, angle: piece.angle };
+			run(world, OBSERVE_S);
+			expect(Math.hypot(piece.x - rest.x, piece.y - rest.y)).toBeLessThan(
+				MAX_DRIFT_M,
+			);
+			expect(Math.abs(piece.angle - rest.angle)).toBeLessThan(MAX_TURN_RAD);
+			expect(piece.asleep).toBe(true);
+			expect(onPedestal(piece)).toBe(true);
+			expect(Math.abs(piece.x)).toBeLessThan(PEDESTAL_HALF_WIDTH);
+		});
+	});
 });
