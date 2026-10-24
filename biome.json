@@ -7,7 +7,7 @@
 	},
 	"files": {
 		"ignoreUnknown": true,
-		"includes": ["**", "!**/dist", "!**/*.md"]
+		"includes": ["**", "!**/dist", "!**/*.md", "!public/shapes.json"]
 	},
 	"formatter": {
 		"enabled": true,
