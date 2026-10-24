@@ -19,6 +19,10 @@ const SETTLE_S = 5;
 const OBSERVE_S = 25;
 const MAX_DRIFT_M = 0.01;
 const MAX_TURN_RAD = 0.01;
+// Slack for float error in the spawn-height checks.
+const EPS = 1e-6;
+
+const all = shapes as Record<string, OutlineResult>;
 
 const box = (hw: number, hh: number, cx = 0, cy = 0): Vec[] => [
 	{ x: cx - hw, y: cy - hh },
@@ -32,9 +36,14 @@ const run = (world: World, seconds: number, until?: () => boolean) => {
 	for (let i = 0; i < steps && !until?.(); i++) world.step(DT);
 };
 
-type Snapshot = Map<Piece, { x: number; y: number; angle: number }>;
-const snapshot = (pieces: Piece[]): Snapshot =>
-	new Map(pieces.map((p) => [p, { x: p.x, y: p.y, angle: p.angle }]));
+type Pose = { x: number; y: number; angle: number };
+const pose = (p: Piece): Pose => ({ x: p.x, y: p.y, angle: p.angle });
+
+const movement = (p: Piece, before: Pose) => {
+	const drift = Math.hypot(p.x - before.x, p.y - before.y);
+	const turn = Math.abs(p.angle - before.angle);
+	return { drift, turn, still: drift < MAX_DRIFT_M && turn < MAX_TURN_RAD };
+};
 
 const onPedestal = (p: Piece) => p.y < PEDESTAL_TOP_Y;
 
@@ -49,22 +58,11 @@ const dropAndWatch = (drops: Drop[]) => {
 	}
 	run(world, SETTLE_S);
 	const standing = world.pieces().filter(onPedestal);
-	const before = snapshot(standing);
+	const before = standing.map(pose);
 	run(world, OBSERVE_S);
 	const moved = standing
-		.map((p) => {
-			const b = before.get(p);
-			if (!b) throw new Error("missing snapshot");
-			return {
-				id: p.id,
-				drift: Math.hypot(p.x - b.x, p.y - b.y),
-				turn: Math.abs(p.angle - b.angle),
-				asleep: p.asleep,
-			};
-		})
-		.filter(
-			(m) => m.drift >= MAX_DRIFT_M || m.turn >= MAX_TURN_RAD || !m.asleep,
-		);
+		.map((p, i) => ({ id: p.id, asleep: p.asleep, ...movement(p, before[i]) }))
+		.filter((m) => !m.still || !m.asleep);
 	return { world, standing, moved };
 };
 
@@ -76,7 +74,9 @@ describe("createWorld", () => {
 	it("drops a piece onto the pedestal and lets it sleep", () => {
 		const world = createWorld();
 		const piece = world.addPiece("a", [box(0.5, 0.5)], 0, 0);
-		expect(piece.y).toBeLessThan(PEDESTAL_TOP_Y - 0.5 - SPAWN_CLEARANCE + 1e-9);
+		expect(piece.y).toBeLessThanOrEqual(
+			PEDESTAL_TOP_Y - 0.5 - SPAWN_CLEARANCE + EPS,
+		);
 		run(world, 5);
 		expect(piece.asleep).toBe(true);
 		expect(piece.y).toBeCloseTo(PEDESTAL_TOP_Y - 0.5, 1);
@@ -89,13 +89,13 @@ describe("createWorld", () => {
 		run(world, 5);
 		const high = world.addPiece("high", [box(0.5, 0.5)], 0, 0);
 		expect(high.y + 0.5).toBeLessThanOrEqual(
-			low.y - 0.5 - SPAWN_CLEARANCE + 1e-6,
+			low.y - 0.5 - SPAWN_CLEARANCE + EPS,
 		);
 	});
 
 	it("puts every polygon of a piece on one body", () => {
 		const world = createWorld();
-		const { polygons } = (shapes as Record<string, OutlineResult>).abomasnow;
+		const { polygons } = all.abomasnow;
 		const piece = world.addPiece("abomasnow", polygons, 0, 0);
 		const info = world.inspect(piece);
 		expect(info.fixtures).toBe(polygons.length);
@@ -182,7 +182,6 @@ describe("createWorld", () => {
 			["klefki", 0.25, -Math.PI / 2],
 			["dragonite", 0.5, 0],
 		];
-		const all = shapes as Record<string, OutlineResult>;
 		const drops = placements.map(([id, x, angle]) => ({
 			id,
 			polygons: all[id].polygons,
@@ -197,22 +196,26 @@ describe("createWorld", () => {
 	}, 30_000);
 
 	describe("a real sprite dropped alone", () => {
-		const all = shapes as Record<string, OutlineResult>;
 		const sorted = Object.keys(all).sort();
 		const mostPieces = [...sorted]
 			.sort((a, b) => all[b].polygons.length - all[a].polygons.length)
 			.slice(0, 6);
-		// ferroseed is a polygonal ball: alone on a flat pedestal it rolls off,
-		// which is geometry, not instability.
-		const rollsOff = new Set(["ferroseed"]);
 		const sample = [
-			...new Set([
-				...["pikachu", "abomasnow", "ambipom", "arbok", "amoonguss"],
-				...["snorlax", "charizard", "klefki"],
-				...mostPieces,
-				...sorted.filter((_, i) => i % 40 === 0),
-			]),
-		].filter((name) => !rollsOff.has(name));
+			"pikachu",
+			"abomasnow",
+			"ambipom",
+			"arbok",
+			"amoonguss",
+			"snorlax",
+			"charizard",
+			"klefki",
+			...mostPieces,
+			...sorted.filter((_, i) => i % 40 === 0),
+		]
+			// ferroseed is a polygonal ball: alone on a flat pedestal it rolls
+			// off, which is geometry, not instability.
+			.filter((name, i, names) => names.indexOf(name) === i)
+			.filter((name) => name !== "ferroseed");
 		// The slowest of all 1025 sprites took 17.5 s to sleep (it rocks first).
 		const SLEEP_WITHIN_S = 20;
 
@@ -221,12 +224,9 @@ describe("createWorld", () => {
 			const piece = world.addPiece(name, all[name].polygons, 0, 0);
 			run(world, SLEEP_WITHIN_S, () => piece.asleep);
 			expect(piece.asleep).toBe(true);
-			const rest = { x: piece.x, y: piece.y, angle: piece.angle };
+			const rest = pose(piece);
 			run(world, OBSERVE_S);
-			expect(Math.hypot(piece.x - rest.x, piece.y - rest.y)).toBeLessThan(
-				MAX_DRIFT_M,
-			);
-			expect(Math.abs(piece.angle - rest.angle)).toBeLessThan(MAX_TURN_RAD);
+			expect(movement(piece, rest)).toMatchObject({ still: true });
 			expect(piece.asleep).toBe(true);
 			expect(onPedestal(piece)).toBe(true);
 			expect(Math.abs(piece.x)).toBeLessThan(PEDESTAL_HALF_WIDTH);
