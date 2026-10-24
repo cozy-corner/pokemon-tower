@@ -60,6 +60,57 @@ export type WorldOptions = {
 	pedestalThickness?: number;
 };
 
+type Entries = Map<string, { piece: Piece; body: Body }>;
+
+function addPiece(
+	world: PlanckWorld,
+	entries: Entries,
+	highestY: () => number,
+	id: string,
+	polygons: Vec[][],
+	x: number,
+	angle: number,
+): Piece {
+	if (entries.has(id)) {
+		throw new Error(`duplicate piece id ${id}`);
+	}
+	const rot = new Rot(angle);
+	const lowest = Math.max(
+		...polygons.flat().map((v) => Rot.mulVec2(rot, new Vec2(v.x, v.y)).y),
+	);
+	const body = world.createBody({
+		type: "dynamic",
+		position: new Vec2(x, highestY() - SPAWN_CLEARANCE - lowest),
+		angle,
+	});
+	// shapes.json is checked against Planck by shapes-data.test.ts.
+	for (const poly of polygons) {
+		body.createFixture({
+			shape: new Polygon(poly.map((v) => new Vec2(v.x, v.y))),
+			density: DENSITY,
+			friction: FRICTION,
+			restitution: RESTITUTION,
+		});
+	}
+	const piece: Piece = {
+		id,
+		get x() {
+			return body.getPosition().x;
+		},
+		get y() {
+			return body.getPosition().y;
+		},
+		get angle() {
+			return body.getAngle();
+		},
+		get asleep() {
+			return !body.isAwake();
+		},
+	};
+	entries.set(id, { piece, body });
+	return piece;
+}
+
 export function createWorld({
 	pedestalHalfWidth = PEDESTAL_HALF_WIDTH,
 	pedestalThickness = PEDESTAL_THICKNESS,
@@ -76,7 +127,7 @@ export function createWorld({
 		restitution: RESTITUTION,
 	});
 
-	const entries = new Map<string, { piece: Piece; body: Body }>();
+	const entries: Entries = new Map();
 	const bodyOf = (piece: Piece) => {
 		const entry = entries.get(piece.id);
 		if (entry?.piece !== piece) {
@@ -97,54 +148,9 @@ export function createWorld({
 		return top;
 	};
 
-	const addPiece = (
-		id: string,
-		polygons: Vec[][],
-		x: number,
-		angle: number,
-	): Piece => {
-		if (entries.has(id)) {
-			throw new Error(`duplicate piece id ${id}`);
-		}
-		const rot = new Rot(angle);
-		const lowest = Math.max(
-			...polygons.flat().map((v) => Rot.mulVec2(rot, new Vec2(v.x, v.y)).y),
-		);
-		const body = world.createBody({
-			type: "dynamic",
-			position: new Vec2(x, highestY() - SPAWN_CLEARANCE - lowest),
-			angle,
-		});
-		// shapes.json is checked against Planck by shapes-data.test.ts.
-		for (const poly of polygons) {
-			body.createFixture({
-				shape: new Polygon(poly.map((v) => new Vec2(v.x, v.y))),
-				density: DENSITY,
-				friction: FRICTION,
-				restitution: RESTITUTION,
-			});
-		}
-		const piece: Piece = {
-			id,
-			get x() {
-				return body.getPosition().x;
-			},
-			get y() {
-				return body.getPosition().y;
-			},
-			get angle() {
-				return body.getAngle();
-			},
-			get asleep() {
-				return !body.isAwake();
-			},
-		};
-		entries.set(id, { piece, body });
-		return piece;
-	};
-
 	return {
-		addPiece,
+		addPiece: (id, polygons, x, angle) =>
+			addPiece(world, entries, highestY, id, polygons, x, angle),
 		step: (dt) => world.step(dt),
 		pieces: () => [...entries.values()].map((e) => e.piece),
 		remove: (piece) => {
