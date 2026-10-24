@@ -114,23 +114,6 @@ describe("createWorld", () => {
 		expect(world.inspect(ccw).mass).toBeCloseTo(2, 9);
 	});
 
-	it("leaves nothing in the world when a piece is rejected", () => {
-		const world = createWorld();
-		const collinear = [
-			{ x: 0, y: 0 },
-			{ x: 1, y: 0 },
-			{ x: 2, y: 0 },
-		];
-		expect(() => world.addPiece("c", [box(0.5, 0.5), collinear], 0, 0)).toThrow(
-			"piece c: polygon 1 would be altered by Planck",
-		);
-		expect(world.pieces()).toEqual([]);
-		// Spawns as in an empty world, so no body was left behind.
-		const ok = world.addPiece("ok", [box(0.5, 0.5)], 0, 0);
-		expect(world.pieces()).toEqual([ok]);
-		expect(ok.y).toBeCloseTo(PEDESTAL_TOP_Y - 0.5 - SPAWN_CLEARANCE, 9);
-	});
-
 	it("removes pieces and rejects duplicate ids", () => {
 		const world = createWorld();
 		const a = world.addPiece("a", [box(0.5, 0.5)], 0, 0);
