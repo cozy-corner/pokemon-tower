@@ -79,8 +79,11 @@ export function buildShapes(
 		// Flags use the exact stats; only the stored copy is rounded.
 		const raw = computeOutline(mask);
 		const result = roundResult(raw);
-		shapes[name] = result;
-		if (!result.polygons.every(isValidPiece)) invalid.push(name);
+		if (result.polygons.length === 0 || !result.polygons.every(isValidPiece)) {
+			invalid.push(name);
+		} else {
+			shapes[name] = result;
+		}
 		const reasons = flagReasons(raw);
 		if (reasons.length > 0) flagged[name] = reasons;
 	}
