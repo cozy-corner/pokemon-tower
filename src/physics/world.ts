@@ -40,16 +40,6 @@ export type World = {
 	inspect(piece: Piece): { fixtures: number; mass: number };
 };
 
-const polygonVertices = (body: Body): Vec2[] => {
-	const points: Vec2[] = [];
-	for (let f = body.getFixtureList(); f; f = f.getNext()) {
-		for (const v of (f.getShape() as PolygonShape).m_vertices) {
-			points.push(body.getWorldPoint(v));
-		}
-	}
-	return points;
-};
-
 export function createWorld(): World {
 	const world = new PlanckWorld({ gravity: new Vec2(0, GRAVITY) });
 	const pedestal = world.createBody({ type: "static" });
@@ -63,17 +53,23 @@ export function createWorld(): World {
 		restitution: RESTITUTION,
 	});
 
-	const bodies = new Map<Piece, Body>();
+	const entries = new Map<string, { piece: Piece; body: Body }>();
 	const bodyOf = (piece: Piece) => {
-		const body = bodies.get(piece);
-		if (!body) throw new Error(`piece ${piece.id} is not in this world`);
-		return body;
+		const entry = entries.get(piece.id);
+		if (entry?.piece !== piece) {
+			throw new Error(`piece ${piece.id} is not in this world`);
+		}
+		return entry.body;
 	};
 
 	const highestY = () => {
 		let top = PEDESTAL_TOP_Y;
-		for (const body of bodies.values()) {
-			for (const p of polygonVertices(body)) top = Math.min(top, p.y);
+		for (const { body } of entries.values()) {
+			for (let f = body.getFixtureList(); f; f = f.getNext()) {
+				for (const v of (f.getShape() as PolygonShape).m_vertices) {
+					top = Math.min(top, body.getWorldPoint(v).y);
+				}
+			}
 		}
 		return top;
 	};
@@ -84,7 +80,7 @@ export function createWorld(): World {
 		x: number,
 		angle: number,
 	): Piece => {
-		if ([...bodies.keys()].some((p) => p.id === id)) {
+		if (entries.has(id)) {
 			throw new Error(`duplicate piece id ${id}`);
 		}
 		// Planck silently truncates longer polygons and swaps degenerate ones
@@ -129,17 +125,17 @@ export function createWorld(): World {
 				return !body.isAwake();
 			},
 		};
-		bodies.set(piece, body);
+		entries.set(id, { piece, body });
 		return piece;
 	};
 
 	return {
 		addPiece,
 		step: (dt) => world.step(dt),
-		pieces: () => [...bodies.keys()],
+		pieces: () => [...entries.values()].map((e) => e.piece),
 		remove: (piece) => {
 			world.destroyBody(bodyOf(piece));
-			bodies.delete(piece);
+			entries.delete(piece.id);
 		},
 		inspect: (piece) => {
 			const body = bodyOf(piece);
