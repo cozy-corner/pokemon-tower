@@ -20,6 +20,7 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"fetch-sprites": "bun scripts/fetch-sprites.ts",
+		"build-shapes": "bun scripts/build-shapes.ts",
 		"test": "vitest run",
 		"lint": "biome ci .",
 		"fmt": "biome check --write .",

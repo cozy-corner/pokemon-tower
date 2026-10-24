@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Shape preview</title>
+	<style>
+		body { font-family: system-ui, sans-serif; margin: 0; padding: 12px; }
+		.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+		button, input { font-size: 18px; min-height: 48px; padding: 0 16px; }
+		input[type="search"] { flex: 1; min-width: 160px; }
+		label { display: flex; align-items: center; gap: 6px; min-height: 48px; font-size: 18px; }
+		input[type="checkbox"] { width: 24px; height: 24px; min-height: 0; }
+		canvas { background: #eee; max-width: 100%; image-rendering: pixelated; }
+		#excluded { color: #fff; background: #c00; padding: 2px 8px; border-radius: 4px; }
+		#flags { color: #c60; font-weight: bold; }
+	</style>
+</head>
+<body>
+	<div class="row">
+		<button type="button" id="prev">&larr; 前</button>
+		<button type="button" id="next">次 &rarr;</button>
+		<input id="search" type="search" placeholder="名前で検索" list="names" />
+		<label><input id="flaggedOnly" type="checkbox" />flagged only</label>
+	</div>
+	<datalist id="names"></datalist>
+	<div class="row">
+		<strong id="name"></strong>
+		<span id="excluded" hidden>excluded</span>
+		<span id="position"></span>
+	</div>
+	<div id="stats"></div>
+	<div id="flags"></div>
+	<canvas id="view"></canvas>
+	<script type="module" src="./preview.ts"></script>
+</body>
+</html>
