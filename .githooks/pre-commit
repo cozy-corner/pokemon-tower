@@ -6,3 +6,4 @@ if [ -n "$bad" ]; then
   echo "$bad" >&2
   exit 1
 fi
+bunx biome check --staged --no-errors-on-unmatched
