@@ -7,7 +7,7 @@
     <style>
       html, body { margin: 0; height: 100%; background: #222; }
       body { display: flex; justify-content: center; }
-      #game { aspect-ratio: 9 / 16; max-height: 100dvh; max-width: 100vw; height: 100dvh; width: auto; }
+      #game { aspect-ratio: 9 / 16; height: min(100dvh, 100vw * 16 / 9); width: auto; }
     </style>
   </head>
   <body>
