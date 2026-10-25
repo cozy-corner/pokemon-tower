@@ -148,14 +148,14 @@ describe("controls", () => {
 			expect(Math.sign(handlers.onNudge.mock.calls[0][0])).toBe(sign);
 		});
 
-		it.each(["KeyK", "ArrowUp"])("rotates once on %s", (k) => {
+		it.each(["KeyK", "ArrowUp", "Space"])("rotates once on %s", (k) => {
 			const { win, handlers } = setup();
 			win.dispatch("keydown", key(k));
 			win.dispatch("keydown", key(k, { repeat: true }));
 			expect(handlers.onRotate).toHaveBeenCalledTimes(1);
 		});
 
-		it.each(["KeyJ", "ArrowDown", "Space", "Enter", "NumpadEnter"])(
+		it.each(["KeyJ", "ArrowDown", "Enter", "NumpadEnter"])(
 			"drops once on %s",
 			(k) => {
 				const { win, handlers } = setup();
@@ -173,15 +173,25 @@ describe("controls", () => {
 		});
 
 		it.each(["Space", "Enter"])(
-			"leaves %s to a focused button instead of dropping twice",
+			"leaves %s to a focused button instead of acting twice",
 			(k) => {
 				const { win, handlers } = setup();
 				const e = key(k, { target: { tagName: "BUTTON" } });
 				win.dispatch("keydown", e);
 				expect(handlers.onDrop).not.toHaveBeenCalled();
+				expect(handlers.onRotate).not.toHaveBeenCalled();
 				expect(e.preventDefault).not.toHaveBeenCalled();
 			},
 		);
+
+		it("still handles arrow and hjkl keys while a button has focus", () => {
+			const { win, handlers } = setup();
+			const target = { tagName: "BUTTON" };
+			win.dispatch("keydown", key("ArrowLeft", { target }));
+			win.dispatch("keydown", key("KeyK", { target }));
+			expect(handlers.onNudge).toHaveBeenCalledTimes(1);
+			expect(handlers.onRotate).toHaveBeenCalledTimes(1);
+		});
 
 		it("leaves browser shortcuts and other keys alone", () => {
 			const { win, handlers } = setup();

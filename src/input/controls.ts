@@ -48,6 +48,12 @@ export function createControls(
 	// Held keys repeat through the OS key repeat, so no timer is needed.
 	keyTarget.addEventListener("keydown", (e) => {
 		if (e.ctrlKey || e.metaKey || e.altKey) return;
+		// A focused button already activates on Space and Enter; handling both would act twice.
+		if (
+			(e.code === "Space" || e.code === "Enter" || e.code === "NumpadEnter") &&
+			(e.target as HTMLElement | null)?.tagName === "BUTTON"
+		)
+			return;
 		// `code`, not `key`: stays put under Caps Lock, Shift and an IME.
 		switch (e.code) {
 			case "KeyH":
@@ -60,15 +66,13 @@ export function createControls(
 				break;
 			case "KeyK":
 			case "ArrowUp":
+			case "Space":
 				if (!e.repeat) handlers.onRotate();
 				break;
 			case "KeyJ":
 			case "ArrowDown":
-			case "Space":
 			case "Enter":
 			case "NumpadEnter":
-				// A focused button already activates on these; handling both would act twice.
-				if ((e.target as HTMLElement | null)?.tagName === "BUTTON") return;
 				if (!e.repeat) handlers.onDrop();
 				break;
 			default:
