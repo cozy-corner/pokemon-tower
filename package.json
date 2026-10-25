@@ -21,6 +21,7 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"fetch-sprites": "bun scripts/fetch-sprites.ts",
+		"fetch-heights": "bun scripts/fetch-heights.ts",
 		"build-shapes": "bun scripts/build-shapes.ts",
 		"test": "vitest run",
 		"lint": "biome ci .",
