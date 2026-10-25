@@ -1,5 +1,6 @@
 import exclusions from "../data/exclusions.json";
 import names from "../data/names.json";
+import { startBgmOnFirstGesture } from "./audio/bgm";
 import { createGame } from "./game/game";
 import type { Shape } from "./geometry/types";
 import { createControls } from "./input/controls";
@@ -116,5 +117,7 @@ const frame = (now: number) => {
 	updateHud();
 	renderer.draw(game.pieces(), game.held);
 	requestAnimationFrame(frame);
+	startBgmOnFirstGesture(Math.random);
 };
 requestAnimationFrame(frame);
+startBgmOnFirstGesture(Math.random);
