@@ -32,6 +32,8 @@ export type Game = {
 	readonly held: HeldPiece | null;
 	/** The pick after the held one, so its sprite can be fetched early. */
 	readonly upcoming: string;
+	/** 1-based order of the held piece, shown as "5. EEVEE". */
+	readonly pieceNumber: number;
 	readonly stackedCount: number;
 	readonly heightM: number;
 	pieces(): Piece[];
@@ -71,6 +73,7 @@ export function createGame({
 	const broken = new Set<string>();
 	let state: GameState = "HOLDING";
 	let stackedCount = 0;
+	let dropped = 0;
 	let heightM = 0;
 	let settleElapsed = 0;
 	let x = 0;
@@ -119,6 +122,9 @@ export function createGame({
 		get upcoming() {
 			return upcoming;
 		},
+		get pieceNumber() {
+			return dropped + 1;
+		},
 		get stackedCount() {
 			return stackedCount;
 		},
@@ -150,6 +156,7 @@ export function createGame({
 		drop() {
 			if (state !== "HOLDING") return;
 			world.addPiece(heldName, polygonsOf(heldName), x, angleOf(turn));
+			dropped++;
 			settleElapsed = 0;
 			state = "SETTLING";
 		},
