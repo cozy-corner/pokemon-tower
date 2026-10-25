@@ -1,5 +1,5 @@
 import type { HeldPiece } from "../game/game";
-import { PIXELS_PER_METER } from "../geometry/types";
+import { spriteWorldSize } from "../geometry/types";
 import {
 	PEDESTAL_HALF_WIDTH,
 	PEDESTAL_THICKNESS,
@@ -27,7 +27,6 @@ const PIECE_TOP_MARGIN = 2.5;
 /** Where the tower top sits on screen, as a fraction of the view from the top. */
 const TOWER_TOP_FRACTION = 0.3;
 const GRASS_THICKNESS = 0.3;
-const SPRITE_SIZE = 128 / PIXELS_PER_METER;
 
 /** World y at the top edge of the screen. Never lower than the initial view. */
 export function cameraTop(pieces: readonly Piece[]): number {
@@ -65,13 +64,9 @@ export function createRenderer(
 		ctx.save();
 		ctx.translate(p.x, p.y);
 		ctx.rotate(p.angle);
-		ctx.drawImage(
-			img,
-			-SPRITE_SIZE / 2,
-			-SPRITE_SIZE / 2,
-			SPRITE_SIZE,
-			SPRITE_SIZE,
-		);
+		// Shapes put the origin at the SVG center, so draw around it.
+		const { w, h } = spriteWorldSize(img.naturalWidth, img.naturalHeight);
+		ctx.drawImage(img, -w / 2, -h / 2, w, h);
 		ctx.restore();
 	};
 
