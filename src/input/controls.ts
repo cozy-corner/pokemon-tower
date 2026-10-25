@@ -67,6 +67,8 @@ export function createControls(
 			case "Space":
 			case "Enter":
 			case "NumpadEnter":
+				// A focused button already activates on these; handling both would act twice.
+				if ((e.target as HTMLElement | null)?.tagName === "BUTTON") return;
 				if (!e.repeat) handlers.onDrop();
 				break;
 			default:
