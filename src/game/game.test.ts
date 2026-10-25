@@ -71,6 +71,15 @@ describe("createGame", () => {
 		expect(game.heightM).toBe(0);
 	});
 
+	it("holds the piece where it starts, rotated or not, so the drop does not jump", () => {
+		const { game, world } = setup({ polygons: [box(0.5, 1)] });
+		game.rotate();
+		const held = game.held as NonNullable<typeof game.held>;
+		game.drop();
+		const [dropped] = world.pieces();
+		expect(dropped.y).toBeCloseTo(held.y, 5);
+	});
+
 	it("clamps the held piece inside the view", () => {
 		const { game } = setup();
 		game.move(100);
