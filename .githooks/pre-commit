@@ -1,4 +1,4 @@
 #!/bin/sh
-# 公開リポジトリにスプライト等の画像を入れない(権利の都合)。判定は scripts/guard-images.sh
+# 公開リポジトリにスプライト等の画像・音源を入れない(権利の都合)。判定は scripts/guard-images.sh
 git diff --cached --name-only --diff-filter=ACMR | scripts/guard-images.sh || exit 1
 bunx biome check --staged --no-errors-on-unmatched
