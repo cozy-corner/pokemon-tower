@@ -52,7 +52,7 @@ const ensureSprite = (name: string) => {
 		sprites.delete(name);
 		game.reportBroken(name);
 	};
-	img.src = `/sprites/${name}.png`;
+	img.src = `/sprites/${name}.svg`;
 	sprites.set(name, img);
 };
 

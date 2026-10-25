@@ -1,17 +1,17 @@
 import exclusions from "../data/exclusions.json";
 import flagged from "../data/flagged.json";
 import names from "../data/names.json";
-import { type OutlineResult, PIXELS_PER_METER } from "../src/geometry/types";
+import { type OutlineResult, spriteWorldSize } from "../src/geometry/types";
 
-const SCALE = 3;
-const SIZE = 128;
+/** Preview zoom: pixels per world meter. */
+const PX_PER_METER = 120;
 
 const el = <T extends HTMLElement>(id: string) =>
 	document.getElementById(id) as T;
 const canvas = el<HTMLCanvasElement>("view");
 const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-canvas.width = SIZE * SCALE;
-canvas.height = SIZE * SCALE;
+canvas.width = 4 * PX_PER_METER;
+canvas.height = 4 * PX_PER_METER;
 
 const flaggedMap: Record<string, string[]> = flagged;
 const excluded = new Set<string>(exclusions);
@@ -43,7 +43,7 @@ function loadImage(name: string): Promise<HTMLImageElement> {
 		const img = new Image();
 		img.onload = () => resolve(img);
 		img.onerror = () => reject(new Error(`no sprite: ${name}`));
-		img.src = `/sprites/${name}.png`;
+		img.src = `/sprites/${name}.svg`;
 	});
 }
 
@@ -52,8 +52,10 @@ async function draw(): Promise<void> {
 	el("position").textContent = name ? `${index + 1} / ${list.length}` : "0 / 0";
 	el("name").textContent = name ?? "(none)";
 	el("excluded").hidden = !name || !excluded.has(name);
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	if (!name) return;
+	if (!name) {
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		return;
+	}
 	const shape = shapes[name];
 	el("stats").textContent = shape
 		? `pieces ${shape.polygons.length}, components ${shape.stats.components}, fillOverHull ${shape.stats.fillOverHull}, thin ${shape.stats.thin}`
@@ -62,13 +64,16 @@ async function draw(): Promise<void> {
 	try {
 		const img = await loadImage(name);
 		if (list[index] !== name) return;
-		ctx.imageSmoothingEnabled = false;
+		const size = spriteWorldSize(img.naturalWidth, img.naturalHeight);
+		canvas.width = Math.round(size.w * PX_PER_METER);
+		canvas.height = Math.round(size.h * PX_PER_METER);
 		ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 	} catch {
 		// Outlines are still drawn when the image is missing.
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
 	}
 	if (list[index] !== name || !shape) return;
-	const px = SCALE * PIXELS_PER_METER;
+	const px = PX_PER_METER;
 	shape.polygons.forEach((poly, i) => {
 		const hue = (i * 47) % 360;
 		ctx.beginPath();
