@@ -12,16 +12,15 @@ import type { Vec } from "../geometry/types";
 // Meters, +y down (same as the sprite images), so gravity is positive y.
 export const GRAVITY = 10;
 export const PEDESTAL_TOP_Y = 0;
-/** World units across the screen. In Pokémon Tower Battle play screenshots
- * (measured by eye) the pedestal is 70% of the screen width and about 3.5
- * times the median Pokémon (which is about 20% of the width). The median
- * sprite here is about 3.06 units, so 13 units keeps that ratio at 84%. */
+/** World units across the screen. Measured by eye from Pokémon Tower Battle
+ * play screenshots: on its 9:16 screens the pedestal is 87 to 93% of the width
+ * and about 3.9 times the median Pokémon (about 23% of the width); on 0.67
+ * aspect screens it is 70%, so sizes follow the screen height. The median
+ * sprite here is about 3.06 units, so 13 units keeps that ratio. */
 export const VIEW_WIDTH = 13;
-/** Pedestal widths as fractions of VIEW_WIDTH. `large` is 70% on the
- * screenshots' 0.67 aspect; scaled to 84% for our 9:16 on the assumption that
- * sizes follow the screen height (unconfirmed). `small` and `medium` are from
- * the animal game, unchecked. */
-export const PEDESTAL_WIDTH_RATIO = { small: 0.55, medium: 0.64, large: 0.84 };
+/** Pedestal widths as fractions of VIEW_WIDTH. `large` is from the play
+ * screenshots above. `small` and `medium` are from the animal game, unchecked. */
+export const PEDESTAL_WIDTH_RATIO = { small: 0.55, medium: 0.64, large: 0.9 };
 export const PEDESTAL_HALF_WIDTHS = {
 	small: (PEDESTAL_WIDTH_RATIO.small * VIEW_WIDTH) / 2,
 	medium: (PEDESTAL_WIDTH_RATIO.medium * VIEW_WIDTH) / 2,
