@@ -100,7 +100,6 @@ describe("createGame", () => {
 
 	it("waits for every piece to sleep before the next one appears (c)", () => {
 		const { game, world } = setup();
-		game.move(game.held?.x ?? 0);
 		game.drop();
 		expect(game.state).toBe("SETTLING");
 		expect(game.held).toBeNull();
@@ -120,11 +119,9 @@ describe("createGame", () => {
 	it("ignores controls while settling", () => {
 		const { game, world } = setup();
 		game.move(2);
-		game.move(game.held?.x ?? 0);
 		game.drop();
 		game.move(-3);
 		game.rotate();
-		game.move(game.held?.x ?? 0);
 		game.drop();
 		expect(world.pieces()).toHaveLength(1);
 		expect(world.pieces()[0].x).toBeCloseTo(2, 1);
@@ -142,7 +139,6 @@ describe("createGame", () => {
 			inspect: () => ({ fixtures: 1, mass: 1 }),
 		};
 		const { game } = setup({ world: stub });
-		game.move(game.held?.x ?? 0);
 		game.drop();
 		for (let i = 0; i < 39; i++) game.step(0.5);
 		expect(game.state).toBe("SETTLING");
@@ -154,7 +150,6 @@ describe("createGame", () => {
 		// The polygon sits far right of its origin, so it tips off the pedestal.
 		const { game, world } = setup({ polygons: [box(1, 1, 3)] });
 		game.move(100);
-		game.move(game.held?.x ?? 0);
 		game.drop();
 		let fell = false;
 		for (let i = 0; i < 30 / DT && game.state === "SETTLING"; i++) {
@@ -192,13 +187,5 @@ describe("createGame", () => {
 			expect(game.held?.id).not.toBe(first);
 			settle(game);
 		}
-	});
-
-	it("does not drop a piece nobody has touched since it appeared", () => {
-		const { world, game } = setup();
-		game.move(0);
-		settle(game);
-		game.drop();
-		expect(world.pieces()).toHaveLength(1);
 	});
 });

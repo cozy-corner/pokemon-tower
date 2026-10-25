@@ -74,15 +74,19 @@ const updateHud = () => {
 	el("best-height").textContent = best.height.toFixed(1);
 };
 
-createControls(canvas, el("rotate"), {
-	onMove: (x) => game.move(x),
-	onRotate: () => game.rotate(),
-	onDrop: () => {
-		// An invisible piece would stay on the tower.
-		const img = game.held && sprites.get(game.held.id);
-		if (img && isReady(img)) game.drop();
+createControls(
+	canvas,
+	{ rotate: el("rotate"), drop: el("drop") },
+	{
+		onMove: (x) => game.move(x),
+		onRotate: () => game.rotate(),
+		onDrop: () => {
+			// An invisible piece would stay on the tower.
+			const img = game.held && sprites.get(game.held.id);
+			if (img && isReady(img)) game.drop();
+		},
 	},
-});
+);
 
 const renderer = createRenderer(canvas, sprites);
 let last: number | null = null;

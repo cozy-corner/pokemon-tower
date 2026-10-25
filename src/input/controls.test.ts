@@ -30,13 +30,17 @@ class FakeElement {
 function setup() {
 	const canvas = new FakeElement();
 	const button = new FakeElement();
+	const dropButton = new FakeElement();
 	const handlers = { onMove: vi.fn(), onRotate: vi.fn(), onDrop: vi.fn() };
 	createControls(
 		canvas as unknown as HTMLCanvasElement,
-		button as unknown as HTMLElement,
+		{
+			rotate: button as unknown as HTMLElement,
+			drop: dropButton as unknown as HTMLElement,
+		},
 		handlers,
 	);
-	return { canvas, button, handlers };
+	return { canvas, button, dropButton, handlers };
 }
 
 const ptr = (pointerId: number, clientX: number, pointerType = "touch") => ({
@@ -68,13 +72,14 @@ describe("controls", () => {
 		expect(handlers.onRotate).toHaveBeenCalledTimes(1);
 	});
 
-	it("drops once on release", () => {
-		const { canvas, handlers } = setup();
+	it("drops on the drop button, not on release", () => {
+		const { canvas, dropButton, handlers } = setup();
 		canvas.dispatch("pointerdown", ptr(1, 200));
 		canvas.dispatch("pointerup", ptr(1, 200));
-		canvas.dispatch("pointerup", ptr(1, 200));
-		expect(handlers.onDrop).toHaveBeenCalledTimes(1);
+		expect(handlers.onDrop).not.toHaveBeenCalled();
 		expect(canvas.captured.size).toBe(0);
+		dropButton.dispatch("click");
+		expect(handlers.onDrop).toHaveBeenCalledTimes(1);
 	});
 
 	it("keeps following the first pointer when a second touches", () => {
@@ -83,12 +88,9 @@ describe("controls", () => {
 		canvas.dispatch("pointerdown", ptr(2, 100));
 		canvas.dispatch("pointermove", ptr(2, 100));
 		canvas.dispatch("pointerup", ptr(2, 100));
-		expect(handlers.onDrop).not.toHaveBeenCalled();
 		expect(handlers.onMove).toHaveBeenCalledTimes(1);
 		canvas.dispatch("pointermove", ptr(1, 250));
 		expect(handlers.onMove).toHaveBeenLastCalledWith(VIEW_WIDTH / 4);
-		canvas.dispatch("pointerup", ptr(1, 250));
-		expect(handlers.onDrop).toHaveBeenCalledTimes(1);
 	});
 
 	it("behaves the same for the mouse", () => {
@@ -98,7 +100,7 @@ describe("controls", () => {
 		canvas.dispatch("pointerup", ptr(7, 200, "mouse"));
 		expect(handlers.onMove).toHaveBeenNthCalledWith(1, -VIEW_WIDTH / 2);
 		expect(handlers.onMove).toHaveBeenNthCalledWith(2, 0);
-		expect(handlers.onDrop).toHaveBeenCalledTimes(1);
+		expect(canvas.captured.size).toBe(0);
 	});
 
 	it("ignores non-primary mouse buttons", () => {
@@ -106,16 +108,14 @@ describe("controls", () => {
 		canvas.dispatch("pointerdown", { ...ptr(7, 100, "mouse"), button: 2 });
 		canvas.dispatch("pointerup", ptr(7, 100, "mouse"));
 		expect(handlers.onMove).not.toHaveBeenCalled();
-		expect(handlers.onDrop).not.toHaveBeenCalled();
 	});
 
-	it("does not drop on pointercancel and can start over", () => {
+	it("can start over after pointercancel", () => {
 		const { canvas, handlers } = setup();
 		canvas.dispatch("pointerdown", ptr(1, 200));
 		canvas.dispatch("pointercancel", ptr(1, 200));
 		canvas.dispatch("pointermove", ptr(1, 250));
 		canvas.dispatch("pointerup", ptr(1, 250));
-		expect(handlers.onDrop).not.toHaveBeenCalled();
 		expect(handlers.onMove).toHaveBeenCalledTimes(1);
 		canvas.dispatch("pointerdown", ptr(2, 200));
 		expect(handlers.onMove).toHaveBeenCalledTimes(2);
