@@ -115,7 +115,7 @@ export function createGame({
 				id: heldName,
 				x,
 				// Where the body will start, so the drop does not jump.
-				y: spawnY(world.highestPoint(), polygonsOf(heldName), angleOf(turn)),
+				y: spawnY(world.highestPoint(), polygonsOf(heldName)),
 				angle: angleOf(turn),
 			};
 		},

@@ -94,6 +94,13 @@ describe("createWorld", () => {
 		);
 	});
 
+	it("spawns at the same height at every rotation", () => {
+		const polygons = [box(1, 0.25)];
+		const flat = createWorld().addPiece("a", polygons, 0, 0);
+		const tilted = createWorld().addPiece("a", polygons, 0, Math.PI / 2);
+		expect(tilted.y).toBeCloseTo(flat.y, 6);
+	});
+
 	it("puts every polygon of a piece on one body", () => {
 		const world = createWorld();
 		const { polygons } = all.abomasnow;

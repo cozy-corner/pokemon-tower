@@ -35,15 +35,15 @@ export const PEDESTAL_THICKNESS = PEDESTAL_THICKNESS_RATIO * VIEW_WIDTH;
  * the world (the pedestal top when empty). Kept small so the drop impact is
  * gentle (about 3 m/s). */
 export const SPAWN_CLEARANCE = 0.5;
-/** Center y where a piece starts: its lowest vertex sits SPAWN_CLEARANCE above `top`. */
-export function spawnY(top: number, polygons: Vec[][], angle: number): number {
-	const s = Math.sin(angle);
-	const c = Math.cos(angle);
-	let lowest = Number.NEGATIVE_INFINITY;
+/** Center y where a piece starts. Uses the farthest vertex from the origin so
+ * the height is the same at every rotation (the held piece must not bob when
+ * rotated); its lowest vertex sits at least SPAWN_CLEARANCE above `top`. */
+export function spawnY(top: number, polygons: Vec[][]): number {
+	let reach = 0;
 	for (const poly of polygons) {
-		for (const v of poly) lowest = Math.max(lowest, s * v.x + c * v.y);
+		for (const v of poly) reach = Math.max(reach, Math.hypot(v.x, v.y));
 	}
-	return top - SPAWN_CLEARANCE - lowest;
+	return top - SPAWN_CLEARANCE - reach;
 }
 export const FRICTION = 0.6;
 export const RESTITUTION = 0;
@@ -89,7 +89,7 @@ function addPiece(
 	}
 	const body = world.createBody({
 		type: "dynamic",
-		position: new Vec2(x, spawnY(highestPoint(), polygons, angle)),
+		position: new Vec2(x, spawnY(highestPoint(), polygons)),
 		angle,
 	});
 	// shapes.json is checked against Planck by shapes-data.test.ts.
