@@ -15,12 +15,10 @@ export const PEDESTAL_TOP_Y = 0;
 /** World units across the screen. Measured by eye from Pokémon Tower Battle
  * play screenshots: on its 9:16 screens the pedestal is 87 to 93% of the width
  * and about 3.9 times the median Pokémon (about 23% of the width); on 0.67
- * aspect screens it is 70%, so sizes follow the screen height. With
- * SVG_UNITS_PER_METER 170 the median outline bounding-box width over the 936
- * sprites is 1.629 units, 23.3% of 7 units. Lapras (2.849 units) is 0.45 of
- * the pedestal (6.3 units), about half as in the reference screenshots. The
- * widest sprite is 3.53 units, 56% of the pedestal. */
-export const VIEW_WIDTH = 13;
+ * aspect screens it is 70%, so sizes follow the screen height. Tuned together
+ * with SVG_UNITS_PER_METER so the median sprite is about a quarter of the
+ * width; `bun run build-shapes` prints the bounding-box widths to check it. */
+export const VIEW_WIDTH = 7;
 /** Pedestal widths as fractions of VIEW_WIDTH. `large` is from the play
  * screenshots above. `small` and `medium` are from the animal game, unchecked. */
 export const PEDESTAL_WIDTH_RATIO = { small: 0.55, medium: 0.64, large: 0.9 };
