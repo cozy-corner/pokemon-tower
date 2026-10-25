@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - 第1段階はひとり用のみ。**通信・部屋・対戦のコードは書かない。**
-- 素材は HOME の 128px: `https://img.pokemondb.net/sprites/home/normal/1x/{名前}.png`。対象は全1025種類。
+- 素材は PokeAPI の dream-world SVG: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/{図鑑番号}.svg`(ユーザー決定)。HOME 128px とスプライトページのアイコンは以前の誤った選択。SVG がある936種類が対象で、無い89種類は `data/exclusions.json` に入れて遊ばない。名前→図鑑番号は `data/dex.json`。
 - 画像ファイルは **git に commit しない**(`.gitignore` に置き場を書く)。スクリプトと名前一覧は commit する。例外は UI 用の `src/assets/ui/` だけ。判定は `scripts/guard-images.sh` で、commit 時のフックと CI が同じものを使う。フックは `bun install` の `prepare` で設定される。
 - ホットリンクしない。画像はローカルに保存して配信する。
 - 画面は縦向き。ボタンは大きく、文字より絵やアイコンを使う(5歳は読めない)。
