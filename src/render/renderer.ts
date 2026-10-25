@@ -26,8 +26,6 @@ export const INITIAL_CAMERA_TOP = VIEW_BOTTOM_Y - VIEW_HEIGHT;
 const PIECE_TOP_MARGIN = 2.5;
 /** Where the tower top sits on screen, as a fraction of the view from the top. */
 const TOWER_TOP_FRACTION = 0.3;
-/** CSS-pixel width of the backing store; the height follows the 9:16 aspect. */
-const BACKING_WIDTH = 720;
 const GRASS_THICKNESS = 0.3;
 const SPRITE_SIZE = 128 / PIXELS_PER_METER;
 
@@ -47,13 +45,19 @@ export function createRenderer(
 	canvas: HTMLCanvasElement,
 	sprites: Map<string, HTMLImageElement>,
 ): Renderer {
-	const dpr = window.devicePixelRatio || 1;
-	// Backing store is sized once; CSS scales it to the window.
-	canvas.width = Math.round(BACKING_WIDTH * dpr);
-	canvas.height = Math.round((canvas.width * VIEW_HEIGHT) / VIEW_WIDTH);
 	const ctx = canvas.getContext("2d");
 	if (!ctx) throw new Error("2d context unavailable");
-	const scale = canvas.width / VIEW_WIDTH;
+	let scale = 1;
+	// One backing pixel per device pixel; a mismatch resamples the sprites twice.
+	const fit = () => {
+		canvas.width = Math.round(
+			canvas.clientWidth * (window.devicePixelRatio || 1),
+		);
+		canvas.height = Math.round((canvas.width * VIEW_HEIGHT) / VIEW_WIDTH);
+		scale = canvas.width / VIEW_WIDTH;
+	};
+	fit();
+	new ResizeObserver(fit).observe(canvas);
 
 	const drawPiece = (p: HeldPiece) => {
 		const img = sprites.get(p.id);
@@ -73,6 +77,7 @@ export function createRenderer(
 
 	return {
 		draw(pieces, held) {
+			ctx.imageSmoothingQuality = "high";
 			ctx.setTransform(1, 0, 0, 1, 0, 0);
 			ctx.fillStyle = "#4ddcff";
 			ctx.fillRect(0, 0, canvas.width, canvas.height);
