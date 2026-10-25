@@ -119,7 +119,9 @@ async function main(): Promise<void> {
 	const extra: string[] = existsSync(EXTRA_EXCLUSIONS_PATH)
 		? JSON.parse(await readFile(EXTRA_EXCLUSIONS_PATH, "utf8"))
 		: [];
-	const excluded = [...new Set([...missing, ...extra])].sort();
+	const excluded = [...new Set([...missing, ...extra])].sort((a, b) =>
+		a < b ? -1 : a > b ? 1 : 0,
+	);
 	await writeFile(EXCLUSIONS_PATH, `${JSON.stringify(excluded, null, "\t")}\n`);
 	console.log(
 		`ok: ${ok.length}, excluded: ${excluded.length} (missing ${missing.length}), failed: ${failed.length}`,
