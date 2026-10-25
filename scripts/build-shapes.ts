@@ -116,6 +116,7 @@ const CACHE_DIR = ".cache/sprites-png";
 
 async function loadSvgMask(
 	name: string,
+	heightM: number,
 ): Promise<{ mask: Mask; size: SpriteSize }> {
 	const svg = await readFile(root(`public/sprites/${name}.svg`), "utf8");
 	const { png: bytes, svgWidth, svgHeight } = rasterizeSvg(svg);
@@ -125,7 +126,7 @@ async function loadSvgMask(
 		{ length: png.width * png.height },
 		(_, i) => png.data[i * 4 + 3],
 	);
-	const size = spriteWorldSize(svgWidth, svgHeight);
+	const size = spriteWorldSize(svgWidth, svgHeight, heightM);
 	return {
 		mask: {
 			alpha,
@@ -149,11 +150,14 @@ async function main(): Promise<void> {
 	const names: string[] = JSON.parse(
 		await readFile(root("data/names.json"), "utf8"),
 	).filter((n: string) => !excluded.has(n));
+	const heights: Record<string, number> = JSON.parse(
+		await readFile(root("data/heights.json"), "utf8"),
+	);
 	await mkdir(root(CACHE_DIR), { recursive: true });
 	const loaded = new Map<string, { mask: Mask; size: SpriteSize }>();
 	for (const name of names) {
 		try {
-			loaded.set(name, await loadSvgMask(name));
+			loaded.set(name, await loadSvgMask(name, heights[name]));
 		} catch (e) {
 			console.error(
 				`unreadable: ${name} (${e instanceof Error ? e.message : String(e)})`,

@@ -15,7 +15,7 @@ export const PEDESTAL_TOP_Y = 0;
  * play screenshots: on its 9:16 screens the pedestal is 87 to 93% of the width
  * and about 3.9 times the median Pokémon (about 23% of the width); on 0.67
  * aspect screens it is 70%, so sizes follow the screen height. Tuned together
- * with SVG_UNITS_PER_METER so the median sprite is about a quarter of the
+ * with MIN/MAX_SPRITE_SIDE so the median sprite is about a quarter of the
  * width; `bun run build-shapes` prints the bounding-box widths to check it. */
 export const VIEW_WIDTH = 7;
 /** Pedestal widths as fractions of VIEW_WIDTH. `large` is from the play
