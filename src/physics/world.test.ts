@@ -158,19 +158,22 @@ describe("createWorld", () => {
 	// Found by an offline greedy search: per piece, in this order, try angles
 	// (multiples of PI/4) then x in 0.25 m steps up to ±1.25, replaying all
 	// drops in a fresh world; keep the first where everything stays on the
-	// pedestal and sleeps. bulbasaur was prepended by hand to fall off.
+	// pedestal and sleeps (several x and angle orders were tried until all nine
+	// stood, with bulbasaur already in the world, since body order changes the
+	// solver's result; searched under vitest, because Bun's Math functions differ
+	// in the last bits and the tower is chaotic). bulbasaur was prepended by hand to fall off.
 	it("pins a 9-high tower of real sprites for the current tuning", () => {
 		const placements: [string, number, number][] = [
-			["bulbasaur", -2.5, 0],
-			["snorlax", 0, 0],
-			["abomasnow", 0, 0],
-			["amoonguss", 0.5, 0],
-			["ambipom", 0.5, 0],
-			["arbok", 0.75, Math.PI],
-			["charizard", 0.25, 0],
-			["pikachu", 0.75, Math.PI / 2],
-			["klefki", 0.25, -Math.PI / 2],
-			["dragonite", 0.5, 0],
+			["bulbasaur", -3.5, 0],
+			["snorlax", -1.25, 0],
+			["abomasnow", -1.25, 0],
+			["amoonguss", -1.25, 0],
+			["ambipom", -0.75, 0],
+			["arbok", 1, 0],
+			["charizard", 1, 0],
+			["pikachu", -1, 0],
+			["klefki", 1, 0],
+			["dragonite", 0.75, 0],
 		];
 		const drops = placements.map(([id, x, angle]) => ({
 			id,
@@ -211,7 +214,8 @@ describe("createWorld", () => {
 			...mostPieces,
 			...sorted.filter((_, i) => i % 40 === 0),
 		].filter((name, i, names) => names.indexOf(name) === i);
-		// The slowest of all 1025 sprites took 17.5 s to sleep (it rocks first).
+		// The slowest of all 936 sprites (lunatone, 20.05 s, so it is not in the sample) takes longer than this to sleep (it rocks
+		// first).
 		const SLEEP_WITHIN_S = 20;
 
 		it.each(sample)("%s comes to rest on the pedestal and stays", (name) => {
