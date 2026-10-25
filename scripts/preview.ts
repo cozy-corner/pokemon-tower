@@ -1,7 +1,7 @@
 import exclusions from "../data/exclusions.json";
 import flagged from "../data/flagged.json";
 import names from "../data/names.json";
-import { type OutlineResult, spriteWorldSize } from "../src/geometry/types";
+import type { Shape } from "../src/geometry/types";
 
 /** Preview zoom: pixels per world meter. */
 const PX_PER_METER = 120;
@@ -15,7 +15,7 @@ canvas.height = 4 * PX_PER_METER;
 
 const flaggedMap: Record<string, string[]> = flagged;
 const excluded = new Set<string>(exclusions);
-async function loadShapes(): Promise<Record<string, OutlineResult>> {
+async function loadShapes(): Promise<Record<string, Shape>> {
 	try {
 		const res = await fetch("/shapes.json");
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -64,9 +64,10 @@ async function draw(): Promise<void> {
 	try {
 		const img = await loadImage(name);
 		if (list[index] !== name) return;
-		const size = spriteWorldSize(img.naturalWidth, img.naturalHeight);
-		canvas.width = Math.round(size.w * PX_PER_METER);
-		canvas.height = Math.round(size.h * PX_PER_METER);
+		if (shape) {
+			canvas.width = Math.round(shape.size.w * PX_PER_METER);
+			canvas.height = Math.round(shape.size.h * PX_PER_METER);
+		}
 		ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 	} catch {
 		// Outlines are still drawn when the image is missing.

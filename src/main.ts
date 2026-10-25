@@ -1,12 +1,12 @@
 import exclusions from "../data/exclusions.json";
 import names from "../data/names.json";
 import { createGame } from "./game/game";
-import type { Vec } from "./geometry/types";
+import type { Shape } from "./geometry/types";
 import { createControls } from "./input/controls";
 import { createWorld } from "./physics/world";
 import { createRenderer, isReady } from "./render/renderer";
 
-type Shapes = Record<string, { polygons: Vec[][] }>;
+type Shapes = Record<string, Shape>;
 
 const STEP_S = 1 / 60;
 // After a long stall (hidden tab) drop the backlog instead of fast-forwarding.
@@ -88,7 +88,7 @@ createControls(
 	},
 );
 
-const renderer = createRenderer(canvas, sprites);
+const renderer = createRenderer(canvas, sprites, (name) => shapes[name].size);
 let last: number | null = null;
 let acc = 0;
 const frame = (now: number) => {

@@ -16,11 +16,15 @@ export const SVG_UNITS_PER_METER = 170;
  */
 export const MAX_SPRITE_SIDE_UNITS = 600;
 
+/** A sprite's drawn size, which shapes.json stores because browsers report 150 px high for an SVG that has only a viewBox. */
+export type SpriteSize = { w: number; h: number };
+export type Shape = OutlineResult & { size: SpriteSize };
+
 /** World size of a sprite from its SVG intrinsic size. */
 export function spriteWorldSize(
 	svgWidth: number,
 	svgHeight: number,
-): { w: number; h: number } {
+): SpriteSize {
 	const k = Math.min(1, MAX_SPRITE_SIDE_UNITS / Math.max(svgWidth, svgHeight));
 	return {
 		w: (svgWidth * k) / SVG_UNITS_PER_METER,

@@ -1,5 +1,5 @@
 import type { HeldPiece } from "../game/game";
-import { spriteWorldSize } from "../geometry/types";
+import type { SpriteSize } from "../geometry/types";
 import {
 	PEDESTAL_HALF_WIDTH,
 	PEDESTAL_THICKNESS,
@@ -43,6 +43,7 @@ export function cameraTop(pieces: readonly Piece[]): number {
 export function createRenderer(
 	canvas: HTMLCanvasElement,
 	sprites: Map<string, HTMLImageElement>,
+	sizeOf: (id: string) => SpriteSize,
 ): Renderer {
 	const ctx = canvas.getContext("2d");
 	if (!ctx) throw new Error("2d context unavailable");
@@ -65,7 +66,7 @@ export function createRenderer(
 		ctx.translate(p.x, p.y);
 		ctx.rotate(p.angle);
 		// Shapes put the origin at the SVG center, so draw around it.
-		const { w, h } = spriteWorldSize(img.naturalWidth, img.naturalHeight);
+		const { w, h } = sizeOf(p.id);
 		ctx.drawImage(img, -w / 2, -h / 2, w, h);
 		ctx.restore();
 	};
