@@ -2,13 +2,18 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { PNG } from "pngjs";
 import { polygonArea } from "../src/geometry/polygon";
-import type { OutlineResult, Vec } from "../src/geometry/types";
+import {
+	type OutlineResult,
+	spriteWorldSize,
+	type Vec,
+} from "../src/geometry/types";
 import {
 	computeOutline,
 	cross,
 	MAX_POLYGON_VERTICES,
 	type Mask,
 } from "./outline";
+import { rasterizeSvg } from "./rasterize";
 
 export type FlagReason = "multi-island" | "low-fill" | "thin";
 
@@ -104,24 +109,39 @@ export function buildShapes(
 	return { shapes, skipped, flagged, invalid };
 }
 
-async function loadPngMask(name: string): Promise<Mask> {
-	const png = PNG.sync.read(await readFile(root(`public/sprites/${name}.png`)));
+/** Rasterized copies are kept (gitignored) for looking at what the outlines were computed from. */
+const CACHE_DIR = ".cache/sprites-png";
+
+async function loadSvgMask(name: string): Promise<Mask> {
+	const svg = await readFile(root(`public/sprites/${name}.svg`), "utf8");
+	const { png: bytes, svgWidth, svgHeight } = rasterizeSvg(svg);
+	await writeFile(root(`${CACHE_DIR}/${name}.png`), bytes);
+	const png = PNG.sync.read(Buffer.from(bytes));
 	const alpha = Uint8Array.from(
 		{ length: png.width * png.height },
 		(_, i) => png.data[i * 4 + 3],
 	);
-	return { alpha, w: png.width, h: png.height };
+	return {
+		alpha,
+		w: png.width,
+		h: png.height,
+		metersPerPx: spriteWorldSize(svgWidth, svgHeight).w / png.width,
+	};
 }
 
 async function main(): Promise<void> {
 	const started = performance.now();
+	const excluded = new Set<string>(
+		JSON.parse(await readFile(root("data/exclusions.json"), "utf8")),
+	);
 	const names: string[] = JSON.parse(
 		await readFile(root("data/names.json"), "utf8"),
-	);
+	).filter((n: string) => !excluded.has(n));
+	await mkdir(root(CACHE_DIR), { recursive: true });
 	const masks = new Map<string, Mask>();
 	for (const name of names) {
 		try {
-			masks.set(name, await loadPngMask(name));
+			masks.set(name, await loadSvgMask(name));
 		} catch (e) {
 			console.error(
 				`unreadable: ${name} (${e instanceof Error ? e.message : String(e)})`,
@@ -138,13 +158,6 @@ async function main(): Promise<void> {
 		root("data/flagged.json"),
 		`${JSON.stringify(flagged, null, "\t")}\n`,
 	);
-	// exclusions.json is hand-edited, so it is only created when absent.
-	await writeFile(root("data/exclusions.json"), "[]\n", { flag: "wx" }).catch(
-		(e) => {
-			if (e.code !== "EEXIST") throw e;
-		},
-	);
-
 	const byReason = (r: FlagReason) =>
 		Object.values(flagged).filter((rs) => rs.includes(r)).length;
 	const pieces = Object.values(shapes)
@@ -159,6 +172,16 @@ async function main(): Promise<void> {
 	);
 	console.log(
 		`pieces per sprite: min ${pieces[0]}, median ${at(0.5)}, p95 ${at(0.95)}, max ${pieces.at(-1)}`,
+	);
+	const widths = Object.values(shapes)
+		.map((s) => {
+			const xs = s.polygons.flat().map((p) => p.x);
+			return Math.max(...xs) - Math.min(...xs);
+		})
+		.sort((a, b) => a - b);
+	const wq = (q: number) => widths[Math.floor(q * (widths.length - 1))];
+	console.log(
+		`bbox width (world units): min ${wq(0)}, p10 ${wq(0.1)}, median ${wq(0.5)}, p90 ${wq(0.9)}, max ${wq(1)}`,
 	);
 	console.log(`time: ${((performance.now() - started) / 1000).toFixed(1)}s`);
 	if (skipped.length > 0) console.log(`skipped names: ${skipped.join(", ")}`);

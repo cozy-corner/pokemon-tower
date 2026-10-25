@@ -51,6 +51,7 @@ describe("buildShapes", () => {
 		alpha: new Uint8Array(n * n).fill(255),
 		w: n,
 		h: n,
+		metersPerPx: 1 / 32,
 	});
 
 	it("computes loadable names, skips null and throwing loaders, and flags", () => {
@@ -72,13 +73,23 @@ describe("buildShapes", () => {
 	});
 
 	it("flags an empty mask as low-fill", () => {
-		const empty: Mask = { alpha: new Uint8Array(16), w: 4, h: 4 };
+		const empty: Mask = {
+			alpha: new Uint8Array(16),
+			w: 4,
+			h: 4,
+			metersPerPx: 1 / 32,
+		};
 		const { flagged } = buildShapes(["ghost"], () => empty);
 		expect(flagged).toEqual({ ghost: ["low-fill"] });
 	});
 
 	it("treats a sprite with no polygons as invalid and leaves it out of shapes", () => {
-		const empty: Mask = { alpha: new Uint8Array(16), w: 4, h: 4 };
+		const empty: Mask = {
+			alpha: new Uint8Array(16),
+			w: 4,
+			h: 4,
+			metersPerPx: 1 / 32,
+		};
 		const { shapes, invalid } = buildShapes(["ghost"], () => empty);
 		expect(invalid).toEqual(["ghost"]);
 		expect(shapes).toEqual({});
