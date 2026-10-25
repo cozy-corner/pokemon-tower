@@ -9,7 +9,7 @@ import {
 import type { Vec } from "../geometry/types";
 
 // Meters, +y down (same as the sprite images), so gravity is positive y.
-export const GRAVITY = 10;
+export const GRAVITY = 8;
 export const PEDESTAL_TOP_Y = 0;
 /** World units across the screen. Measured by eye from Pokémon Tower Battle
  * play screenshots: on its 9:16 screens the pedestal is 87 to 93% of the width
