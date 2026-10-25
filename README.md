@@ -6,3 +6,11 @@
 - 画像は PokeAPI の dream-world SVG です。SVG が無い89種類は `data/exclusions.json` に入れて遊びません(取得で作り直されます)。手で外したいものは `data/exclusions-extra.json` に書きます。
 - 設計: `docs/superpowers/specs/`
 - 実装計画: `docs/superpowers/plans/`
+
+## 操作
+
+- マウス・タッチ: ドラッグで位置、回転ボタンで回転、落とすボタンで落下。
+- キーボード:
+  - 左右に動かす: `h` `l` / `←` `→`(押し続けると連続で動く)
+  - 回転(45度): `k` / `↑`
+  - 落とす: `j` / `↓` / Space / Enter
