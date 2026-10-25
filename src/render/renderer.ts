@@ -49,15 +49,15 @@ export function createRenderer(
 	if (!ctx) throw new Error("2d context unavailable");
 	let scale = 1;
 	// One backing pixel per device pixel; a mismatch resamples the sprites twice.
-	const fit = () => {
+	const resize = () => {
 		canvas.width = Math.round(
 			canvas.clientWidth * (window.devicePixelRatio || 1),
 		);
 		canvas.height = Math.round((canvas.width * VIEW_HEIGHT) / VIEW_WIDTH);
 		scale = canvas.width / VIEW_WIDTH;
 	};
-	fit();
-	new ResizeObserver(fit).observe(canvas);
+	resize();
+	new ResizeObserver(resize).observe(canvas);
 
 	const drawPiece = (p: HeldPiece) => {
 		const img = sprites.get(p.id);
