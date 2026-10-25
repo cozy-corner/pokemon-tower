@@ -3,6 +3,7 @@ import {
 	PEDESTAL_THICKNESS,
 	PEDESTAL_TOP_Y,
 	type Piece,
+	spawnY,
 	VIEW_WIDTH,
 	type World,
 } from "../physics/world";
@@ -11,8 +12,6 @@ import {
 export const SPAWN_TIMEOUT_S = 20;
 /** Below the pedestal's underside; a piece past it can never come back. */
 export const KILL_LINE_Y = PEDESTAL_THICKNESS + 5;
-/** Held piece center height above the tower top, clear of the highest piece. */
-const HOLD_HEIGHT = 3;
 const MAX_HOLD_X = VIEW_WIDTH / 2 - 1;
 export const ROTATE_STEP_DEG = 45;
 const TURNS = 360 / ROTATE_STEP_DEG;
@@ -87,7 +86,6 @@ export function createGame({
 	};
 	let heldName = pick(null);
 	let upcoming = pick(heldName);
-	let heldY = world.highestPoint() - HOLD_HEIGHT;
 
 	const refreshStats = () => {
 		stackedCount = world.pieces().length;
@@ -102,7 +100,6 @@ export function createGame({
 	const spawn = () => {
 		advance();
 		turn = 0;
-		heldY = world.highestPoint() - HOLD_HEIGHT;
 		state = "HOLDING";
 	};
 
@@ -115,7 +112,8 @@ export function createGame({
 			return {
 				id: heldName,
 				x,
-				y: heldY,
+				// Where the body will start, so the drop does not jump.
+				y: spawnY(world.highestPoint(), polygonsOf(heldName), angleOf(turn)),
 				angle: angleOf(turn),
 			};
 		},
