@@ -48,23 +48,25 @@ export function createControls(
 	// Held keys repeat through the OS key repeat, so no timer is needed.
 	keyTarget.addEventListener("keydown", (e) => {
 		if (e.ctrlKey || e.metaKey || e.altKey) return;
-		switch (e.key) {
-			case "h":
+		// `code`, not `key`: stays put under Caps Lock, Shift and an IME.
+		switch (e.code) {
+			case "KeyH":
 			case "ArrowLeft":
 				handlers.onNudge(-KEY_STEP);
 				break;
-			case "l":
+			case "KeyL":
 			case "ArrowRight":
 				handlers.onNudge(KEY_STEP);
 				break;
-			case "k":
+			case "KeyK":
 			case "ArrowUp":
 				if (!e.repeat) handlers.onRotate();
 				break;
-			case "j":
+			case "KeyJ":
 			case "ArrowDown":
-			case " ":
+			case "Space":
 			case "Enter":
+			case "NumpadEnter":
 				if (!e.repeat) handlers.onDrop();
 				break;
 			default:
