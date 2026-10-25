@@ -12,14 +12,14 @@ import type { Vec } from "../geometry/types";
 // Meters, +y down (same as the sprite images), so gravity is positive y.
 export const GRAVITY = 10;
 export const PEDESTAL_TOP_Y = 0;
-/** World units across the screen. Box2D-style engines want bodies of about
- * 0.1 to 10 units, so one screen width is 10. The median sprite is about
- * 3.06 units wide, about 30% of the screen, like the original game's animals
- * on its portrait 9:16 screen. */
-export const VIEW_WIDTH = 10;
-/** Pedestal widths as fractions of VIEW_WIDTH, estimated from screenshots of
- * the original game (a few percent error). Large appears most often there. */
-export const PEDESTAL_WIDTH_RATIO = { small: 0.55, medium: 0.64, large: 0.8 };
+/** World units across the screen. The median sprite is about 3.06 units wide,
+ * so about 18% of the screen, in line with the 10 to 26% the Pokémon take in
+ * Pokémon Tower Battle screenshots (measured by eye, 15 frames). */
+export const VIEW_WIDTH = 17;
+/** Pedestal widths as fractions of VIEW_WIDTH. `large` is about 71% of the
+ * screen in the Pokémon Tower Battle screenshots; small and medium are from
+ * the animal game and unchecked against it. Measured by eye. */
+export const PEDESTAL_WIDTH_RATIO = { small: 0.55, medium: 0.64, large: 0.71 };
 export const PEDESTAL_HALF_WIDTHS = {
 	small: (PEDESTAL_WIDTH_RATIO.small * VIEW_WIDTH) / 2,
 	medium: (PEDESTAL_WIDTH_RATIO.medium * VIEW_WIDTH) / 2,

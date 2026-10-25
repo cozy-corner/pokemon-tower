@@ -17,15 +17,18 @@ export type Renderer = {
 };
 
 export const VIEW_HEIGHT = (VIEW_WIDTH * 16) / 9;
-/** World y at the screen bottom: the pedestal plus a little ground below it. */
-const VIEW_BOTTOM_Y = PEDESTAL_THICKNESS + 1;
+/** Room under the pedestal for the buttons, which sit in the page, not the canvas. */
+const BUTTON_BAND = 0.18 * VIEW_HEIGHT;
+/** World y at the screen bottom. */
+const VIEW_BOTTOM_Y = PEDESTAL_THICKNESS + BUTTON_BAND;
 export const INITIAL_CAMERA_TOP = VIEW_BOTTOM_Y - VIEW_HEIGHT;
 /** Piece has no vertex info, so assume a piece reaches this far above its center. */
 const PIECE_TOP_MARGIN = 2.5;
 /** Where the tower top sits on screen, as a fraction of the view from the top. */
 const TOWER_TOP_FRACTION = 0.3;
 /** CSS-pixel width of the backing store; the height follows the 9:16 aspect. */
-const BACKING_WIDTH = 360;
+const BACKING_WIDTH = 720;
+const GRASS_THICKNESS = 0.3;
 const SPRITE_SIZE = 128 / PIXELS_PER_METER;
 
 /** World y at the top edge of the screen. Never lower than the initial view. */
@@ -71,7 +74,7 @@ export function createRenderer(
 	return {
 		draw(pieces, held) {
 			ctx.setTransform(1, 0, 0, 1, 0, 0);
-			ctx.fillStyle = "#cfe8f5";
+			ctx.fillStyle = "#4ddcff";
 			ctx.fillRect(0, 0, canvas.width, canvas.height);
 			ctx.setTransform(
 				scale,
@@ -81,12 +84,19 @@ export function createRenderer(
 				(VIEW_WIDTH / 2) * scale,
 				-cameraTop(pieces) * scale,
 			);
-			ctx.fillStyle = "#8a6a4a";
+			ctx.fillStyle = "#a8654a";
 			ctx.fillRect(
 				-PEDESTAL_HALF_WIDTH,
 				PEDESTAL_TOP_Y,
 				PEDESTAL_HALF_WIDTH * 2,
 				PEDESTAL_THICKNESS,
+			);
+			ctx.fillStyle = "#2edc2e";
+			ctx.fillRect(
+				-PEDESTAL_HALF_WIDTH,
+				PEDESTAL_TOP_Y,
+				PEDESTAL_HALF_WIDTH * 2,
+				GRASS_THICKNESS,
 			);
 			for (const p of pieces) drawPiece(p);
 			if (held) drawPiece(held);
