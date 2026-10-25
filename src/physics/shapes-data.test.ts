@@ -1,5 +1,7 @@
 import { Polygon, Settings, Vec2 } from "planck";
 import { describe, expect, it } from "vitest";
+import exclusions from "../../data/exclusions.json";
+import names from "../../data/names.json";
 import shapes from "../../public/shapes.json";
 import type { OutlineResult, Vec } from "../geometry/types";
 
@@ -70,8 +72,12 @@ describe("the shape check itself", () => {
 describe("public/shapes.json", () => {
 	const all = Object.entries(shapes as Record<string, OutlineResult>);
 
-	it("has every sprite", () => {
-		expect(all).toHaveLength(1025);
+	it("has every name that is not excluded, and nothing else", () => {
+		const excluded = new Set<string>(exclusions);
+		expect(names).toHaveLength(1025);
+		expect(all.map(([name]) => name).sort()).toEqual(
+			names.filter((n) => !excluded.has(n)).sort(),
+		);
 	});
 
 	it("only has polygons Planck keeps exactly as given", () => {
