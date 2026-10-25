@@ -137,6 +137,10 @@ async function loadSvgMask(
 	};
 }
 
+/** Nearest-rank quantile of an ascending array. */
+const quantile = (sorted: number[], q: number) =>
+	sorted[Math.floor(q * (sorted.length - 1))];
+
 async function main(): Promise<void> {
 	const started = performance.now();
 	const excluded = new Set<string>(
@@ -176,7 +180,7 @@ async function main(): Promise<void> {
 	const pieces = Object.values(shapes)
 		.map((s) => s.polygons.length)
 		.sort((a, b) => a - b);
-	const at = (q: number) => pieces[Math.floor(q * (pieces.length - 1))];
+	const at = (q: number) => quantile(pieces, q);
 	console.log(
 		`computed: ${Object.keys(shapes).length}, skipped: ${skipped.length}, invalid after rounding: ${invalid.length}`,
 	);
@@ -192,7 +196,7 @@ async function main(): Promise<void> {
 			return Math.max(...xs) - Math.min(...xs);
 		})
 		.sort((a, b) => a - b);
-	const wq = (q: number) => widths[Math.floor(q * (widths.length - 1))];
+	const wq = (q: number) => quantile(widths, q);
 	console.log(
 		`bbox width (world units): min ${wq(0)}, p10 ${wq(0.1)}, median ${wq(0.5)}, p90 ${wq(0.9)}, max ${wq(1)}`,
 	);
