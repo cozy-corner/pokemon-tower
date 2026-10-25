@@ -214,8 +214,8 @@ describe("createWorld", () => {
 			...mostPieces,
 			...sorted.filter((_, i) => i % 40 === 0),
 		].filter((name, i, names) => names.indexOf(name) === i);
-		// The slowest of all 936 sprites (lunatone, 20.05 s, so it is not in the sample) takes longer than this to sleep (it rocks
-		// first).
+		// Of all 936 sprites only lunatone sleeps later (20.05 s; it rocks first),
+		// and it is not in the sample.
 		const SLEEP_WITHIN_S = 20;
 
 		it.each(sample)("%s comes to rest on the pedestal and stays", (name) => {
