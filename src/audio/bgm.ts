@@ -1,8 +1,8 @@
-// Red/Green town themes (playlist/town/1-7.mp3), saved locally as public/bgm/bgm-N.mp3.
+// Red/Green town themes, saved locally as public/bgm/bgm-N.wav.
 // The files are not in git (rights); a missing file just means no music.
 export const TRACKS = Array.from(
 	{ length: 7 },
-	(_, i) => `${import.meta.env.BASE_URL}bgm/bgm-${i + 1}.mp3`,
+	(_, i) => `${import.meta.env.BASE_URL}bgm/bgm-${i + 1}.wav`,
 );
 
 /** A random track, avoiding `previous` so the same theme never plays twice in a row. */
