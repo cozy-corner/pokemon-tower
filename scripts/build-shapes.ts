@@ -114,9 +114,9 @@ export function buildShapes(
 /** Rasterized copies are kept (gitignored) for looking at what the outlines were computed from. */
 const CACHE_DIR = ".cache/sprites-png";
 
-const sizes = new Map<string, SpriteSize>();
-
-async function loadSvgMask(name: string): Promise<Mask> {
+async function loadSvgMask(
+	name: string,
+): Promise<{ mask: Mask; size: SpriteSize }> {
 	const svg = await readFile(root(`public/sprites/${name}.svg`), "utf8");
 	const { png: bytes, svgWidth, svgHeight } = rasterizeSvg(svg);
 	await writeFile(root(`${CACHE_DIR}/${name}.png`), bytes);
@@ -126,12 +126,14 @@ async function loadSvgMask(name: string): Promise<Mask> {
 		(_, i) => png.data[i * 4 + 3],
 	);
 	const size = spriteWorldSize(svgWidth, svgHeight);
-	sizes.set(name, size);
 	return {
-		alpha,
-		w: png.width,
-		h: png.height,
-		metersPerPx: size.w / png.width,
+		mask: {
+			alpha,
+			w: png.width,
+			h: png.height,
+			metersPerPx: size.w / png.width,
+		},
+		size,
 	};
 }
 
@@ -144,10 +146,10 @@ async function main(): Promise<void> {
 		await readFile(root("data/names.json"), "utf8"),
 	).filter((n: string) => !excluded.has(n));
 	await mkdir(root(CACHE_DIR), { recursive: true });
-	const masks = new Map<string, Mask>();
+	const loaded = new Map<string, { mask: Mask; size: SpriteSize }>();
 	for (const name of names) {
 		try {
-			masks.set(name, await loadSvgMask(name));
+			loaded.set(name, await loadSvgMask(name));
 		} catch (e) {
 			console.error(
 				`unreadable: ${name} (${e instanceof Error ? e.message : String(e)})`,
@@ -156,11 +158,11 @@ async function main(): Promise<void> {
 	}
 	const { shapes, skipped, flagged, invalid } = buildShapes(
 		names,
-		(name) => masks.get(name) ?? null,
+		(name) => loaded.get(name)?.mask ?? null,
 	);
 	const stored: Record<string, Shape> = {};
 	for (const [name, shape] of Object.entries(shapes)) {
-		const size = sizes.get(name) as SpriteSize;
+		const size = (loaded.get(name) as { size: SpriteSize }).size;
 		stored[name] = { ...shape, size: { w: round(size.w), h: round(size.h) } };
 	}
 	await mkdir(root("data"), { recursive: true });
