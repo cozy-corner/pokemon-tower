@@ -130,15 +130,15 @@ describe("controls", () => {
 
 	describe("keyboard", () => {
 		const key = (k: string, extra: object = {}) => ({
-			key: k,
+			code: k,
 			preventDefault: vi.fn(),
 			...extra,
 		});
 
 		it.each([
-			["h", -1],
+			["KeyH", -1],
 			["ArrowLeft", -1],
-			["l", 1],
+			["KeyL", 1],
 			["ArrowRight", 1],
 		])("nudges on %s, including repeats", (k, sign) => {
 			const { win, handlers } = setup();
@@ -148,25 +148,35 @@ describe("controls", () => {
 			expect(Math.sign(handlers.onNudge.mock.calls[0][0])).toBe(sign);
 		});
 
-		it.each(["k", "ArrowUp"])("rotates once on %s", (k) => {
+		it.each(["KeyK", "ArrowUp"])("rotates once on %s", (k) => {
 			const { win, handlers } = setup();
 			win.dispatch("keydown", key(k));
 			win.dispatch("keydown", key(k, { repeat: true }));
 			expect(handlers.onRotate).toHaveBeenCalledTimes(1);
 		});
 
-		it.each(["j", "ArrowDown", " ", "Enter"])("drops once on %s", (k) => {
+		it.each(["KeyJ", "ArrowDown", "Space", "Enter", "NumpadEnter"])(
+			"drops once on %s",
+			(k) => {
+				const { win, handlers } = setup();
+				win.dispatch("keydown", key(k));
+				win.dispatch("keydown", key(k, { repeat: true }));
+				expect(handlers.onDrop).toHaveBeenCalledTimes(1);
+			},
+		);
+
+		it("ignores the typed character, so Caps Lock and an IME do not matter", () => {
 			const { win, handlers } = setup();
-			win.dispatch("keydown", key(k));
-			win.dispatch("keydown", key(k, { repeat: true }));
-			expect(handlers.onDrop).toHaveBeenCalledTimes(1);
+			win.dispatch("keydown", key("KeyL", { key: "Process" }));
+			win.dispatch("keydown", key("KeyL", { key: "L" }));
+			expect(handlers.onNudge).toHaveBeenCalledTimes(2);
 		});
 
 		it("leaves browser shortcuts and other keys alone", () => {
 			const { win, handlers } = setup();
-			const e = key("l", { metaKey: true });
+			const e = key("KeyL", { metaKey: true });
 			win.dispatch("keydown", e);
-			win.dispatch("keydown", key("x"));
+			win.dispatch("keydown", key("KeyX"));
 			expect(handlers.onNudge).not.toHaveBeenCalled();
 			expect(e.preventDefault).not.toHaveBeenCalled();
 		});
