@@ -88,6 +88,15 @@ describe("createGame", () => {
 		expect(game.held?.x).toBe(-(VIEW_WIDTH / 2 - 1));
 	});
 
+	it("nudges the held piece and clamps at the edge", () => {
+		const { game } = setup();
+		game.nudge(0.5);
+		game.nudge(0.5);
+		expect(game.held?.x).toBe(1);
+		game.nudge(-100);
+		expect(game.held?.x).toBe(-(VIEW_WIDTH / 2 - 1));
+	});
+
 	it("returns to the same angle after eight rotations", () => {
 		const { game } = setup();
 		game.rotate();
