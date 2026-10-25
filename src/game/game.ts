@@ -93,9 +93,13 @@ export function createGame({
 		heightM = PEDESTAL_TOP_Y - world.highestPoint();
 	};
 
-	const spawn = () => {
+	const advance = () => {
 		heldName = upcoming;
 		upcoming = pick(heldName);
+	};
+
+	const spawn = () => {
+		advance();
 		turn = 0;
 		touched = false;
 		heldY = world.highestPoint() - HOLD_HEIGHT;
@@ -156,8 +160,7 @@ export function createGame({
 		reportBroken(name) {
 			broken.add(name);
 			if (state === "HOLDING" && heldName === name) {
-				heldName = upcoming;
-				upcoming = pick(heldName);
+				advance();
 			} else if (upcoming === name) {
 				upcoming = pick(heldName);
 			}
