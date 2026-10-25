@@ -77,7 +77,11 @@ const updateHud = () => {
 createControls(canvas, el("rotate"), {
 	onMove: (x) => game.move(x),
 	onRotate: () => game.rotate(),
-	onDrop: () => game.drop(),
+	onDrop: () => {
+		// An invisible piece would stay on the tower.
+		const img = game.held && sprites.get(game.held.id);
+		if (img?.complete && img.naturalWidth > 0) game.drop();
+	},
 });
 
 const renderer = createRenderer(canvas, sprites);
