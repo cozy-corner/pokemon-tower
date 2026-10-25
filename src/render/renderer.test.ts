@@ -15,18 +15,20 @@ describe("cameraTop", () => {
 		expect(cameraTop([])).toBe(INITIAL_CAMERA_TOP);
 	});
 
-	it("rises when an asleep piece is high", () => {
+	it("rises when a piece is high", () => {
 		expect(cameraTop([piece(-30)])).toBeLessThan(INITIAL_CAMERA_TOP);
 	});
 
-	it("follows the highest asleep piece", () => {
+	it("follows the highest piece", () => {
 		expect(cameraTop([piece(-30), piece(-40)])).toBeLessThan(
 			cameraTop([piece(-30)]),
 		);
 	});
 
-	it("ignores awake pieces", () => {
-		expect(cameraTop([piece(-50, false)])).toBe(INITIAL_CAMERA_TOP);
+	it("keeps following a tower whose pieces are all awake", () => {
+		expect(cameraTop([piece(-30, false), piece(-40, false)])).toBe(
+			cameraTop([piece(-30), piece(-40)]),
+		);
 	});
 
 	it("never goes below the initial view", () => {
