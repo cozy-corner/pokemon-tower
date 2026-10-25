@@ -172,6 +172,17 @@ describe("controls", () => {
 			expect(handlers.onNudge).toHaveBeenCalledTimes(2);
 		});
 
+		it.each(["Space", "Enter"])(
+			"leaves %s to a focused button instead of dropping twice",
+			(k) => {
+				const { win, handlers } = setup();
+				const e = key(k, { target: { tagName: "BUTTON" } });
+				win.dispatch("keydown", e);
+				expect(handlers.onDrop).not.toHaveBeenCalled();
+				expect(e.preventDefault).not.toHaveBeenCalled();
+			},
+		);
+
 		it("leaves browser shortcuts and other keys alone", () => {
 			const { win, handlers } = setup();
 			const e = key("KeyL", { metaKey: true });
