@@ -25,7 +25,10 @@ type Best = { count: number; height: number };
 const loadBest = (): Best => {
 	try {
 		const saved = JSON.parse(localStorage.getItem(RECORD_KEY) ?? "null");
-		if (saved) return saved;
+		// localStorage is user-editable; a bad shape would put NaN on the HUD every frame.
+		if (Number.isFinite(saved?.count) && Number.isFinite(saved?.height)) {
+			return { count: saved.count, height: saved.height };
+		}
 	} catch {}
 	return { count: 0, height: 0 };
 };
