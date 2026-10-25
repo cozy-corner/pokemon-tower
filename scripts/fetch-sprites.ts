@@ -11,6 +11,8 @@ const HEADERS = { "User-Agent": "Mozilla/5.0" };
 const NAMES_PATH = "data/names.json";
 const DEX_PATH = "data/dex.json";
 const EXCLUSIONS_PATH = "data/exclusions.json";
+/** Hand-edited names to leave out as well; fetching never overwrites it. */
+const EXTRA_EXCLUSIONS_PATH = "data/exclusions-extra.json";
 const DELAY_MS = 100;
 
 export function parseNames(html: string): string[] {
@@ -113,10 +115,14 @@ async function main(): Promise<void> {
 		url: `${IMAGE_URL}/${dex[name]}.svg`,
 	}));
 	const { ok, missing, failed } = await fetchSprites(items, "public/sprites");
-	// Names without an image are what exclusions.json is for; it is derived, not hand-edited.
-	await writeFile(EXCLUSIONS_PATH, `${JSON.stringify(missing, null, "\t")}\n`);
+	// exclusions.json is derived: names without an image plus the hand-edited extras.
+	const extra: string[] = existsSync(EXTRA_EXCLUSIONS_PATH)
+		? JSON.parse(await readFile(EXTRA_EXCLUSIONS_PATH, "utf8"))
+		: [];
+	const excluded = [...new Set([...missing, ...extra])].sort();
+	await writeFile(EXCLUSIONS_PATH, `${JSON.stringify(excluded, null, "\t")}\n`);
 	console.log(
-		`ok: ${ok.length}, missing (excluded): ${missing.length}, failed: ${failed.length}`,
+		`ok: ${ok.length}, excluded: ${excluded.length} (missing ${missing.length}), failed: ${failed.length}`,
 	);
 	if (failed.length > 0) {
 		console.log(`failed names: ${failed.join(", ")}`);
