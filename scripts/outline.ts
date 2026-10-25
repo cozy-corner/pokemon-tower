@@ -1,12 +1,14 @@
 import { Settings } from "planck";
 import { polygonArea } from "../src/geometry/polygon";
-import {
-	type OutlineResult,
-	PIXELS_PER_METER,
-	type Vec,
-} from "../src/geometry/types";
+import type { OutlineResult, Vec } from "../src/geometry/types";
 
-export type Mask = { alpha: Uint8Array; w: number; h: number };
+export type Mask = {
+	alpha: Uint8Array;
+	w: number;
+	h: number;
+	/** World size of one pixel. */
+	metersPerPx: number;
+};
 
 /** Three indices into a polygon's vertex array. */
 type Triangle = [number, number, number];
@@ -23,7 +25,7 @@ const ALPHA_THRESHOLD = 127;
  * has positive shoelace area in those coordinates.
  */
 export function computeOutline(mask: Mask): OutlineResult {
-	const { w, h } = mask;
+	const { w, h, metersPerPx } = mask;
 	const { kept, components } = keptIslands(mask);
 	const area = kept.reduce((n, v) => n + v, 0);
 	if (area === 0) {
@@ -38,8 +40,8 @@ export function computeOutline(mask: Mask): OutlineResult {
 	fillHoles(solid, w, h);
 
 	const toMeters = (p: Vec): Vec => ({
-		x: (p.x - w / 2) / PIXELS_PER_METER,
-		y: (p.y - h / 2) / PIXELS_PER_METER,
+		x: (p.x - w / 2) * metersPerPx,
+		y: (p.y - h / 2) * metersPerPx,
 	});
 	const polygons = islandStarts(solid, w, h)
 		.flatMap((start) => decomposeContour(traceOuter(solid, w, h, start)))

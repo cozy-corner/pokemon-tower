@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { polygonArea } from "../src/geometry/polygon";
-import { PIXELS_PER_METER, type Vec } from "../src/geometry/types";
+import type { Vec } from "../src/geometry/types";
 import {
 	computeOutline,
 	cross,
@@ -10,8 +10,15 @@ import {
 	THIN_THICKNESS_PX,
 } from "./outline";
 
+const PIXELS_PER_METER = 32;
+
 function blankMask(w: number, h: number): Mask {
-	return { alpha: new Uint8Array(w * h), w, h };
+	return {
+		alpha: new Uint8Array(w * h),
+		w,
+		h,
+		metersPerPx: 1 / PIXELS_PER_METER,
+	};
 }
 
 function fillRect(
