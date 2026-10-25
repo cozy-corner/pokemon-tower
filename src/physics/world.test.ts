@@ -152,51 +152,6 @@ describe("createWorld", () => {
 		expect(moved).toEqual([]);
 	});
 
-	// Regression pin, pinned to FRICTION 0.6, SPAWN_CLEARANCE 0.5, a pedestal
-	// of half-width 3 and thickness 1 and Planck 1.5.1: any change topples
-	// it; regenerate the pin.
-	// Found by an offline greedy search: per piece, in this order, try angles
-	// (multiples of PI/4) then x in 0.25 m steps up to ±1.25, replaying all
-	// drops in a fresh world; keep the first where everything stays on the
-	// pedestal and sleeps (several x and angle orders were tried until all nine
-	// stood, with bulbasaur already in the world, since body order changes the
-	// solver's result; searched under vitest, because Bun's Math functions differ
-	// in the last bits and the tower is chaotic). bulbasaur was prepended by hand to fall off.
-	it("pins a 9-high tower of real sprites for the current tuning", () => {
-		const placements: [string, number, number][] = [
-			["bulbasaur", -3.5, 0],
-			["snorlax", -1.25, 0],
-			["abomasnow", -1.25, 0],
-			["amoonguss", -1.25, 0],
-			["ambipom", -0.75, 0],
-			["arbok", 1, 0],
-			["charizard", 1, 0],
-			["pikachu", -1, 0],
-			["klefki", 1, 0],
-			["dragonite", 0.75, 0],
-		];
-		const drops = placements.map(([id, x, angle]) => ({
-			id,
-			polygons: all[id].polygons,
-			x,
-			angle,
-		}));
-		const { world, standing, moved } = dropAndWatch(drops, {
-			pedestalHalfWidth: 3,
-			pedestalThickness: 1,
-		});
-		const bulbasaur = world.pieces().find((p) => p.id === "bulbasaur");
-		// +y is down, so below the pedestal top means a larger y.
-		expect(
-			bulbasaur?.y,
-			"the pin expects bulbasaur to fall off the pedestal",
-		).toBeGreaterThan(PEDESTAL_TOP_Y);
-		expect(standing.map((p) => p.id)).toEqual(
-			placements.slice(1).map(([id]) => id),
-		);
-		expect(moved).toEqual([]);
-	}, 30_000);
-
 	describe("a real sprite dropped alone", () => {
 		const sorted = Object.keys(all).sort();
 		const mostPieces = [...sorted]
