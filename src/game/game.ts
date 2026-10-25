@@ -1,5 +1,4 @@
 import type { Vec } from "../geometry/types";
-import { ROTATE_STEP_DEG } from "../input/controls";
 import {
 	PEDESTAL_THICKNESS,
 	PEDESTAL_TOP_Y,
@@ -15,6 +14,7 @@ export const KILL_LINE_Y = PEDESTAL_THICKNESS + 5;
 /** Held piece center height above the tower top, clear of the highest piece. */
 const HOLD_HEIGHT = 3;
 const MAX_HOLD_X = VIEW_WIDTH / 2 - 1;
+export const ROTATE_STEP_DEG = 45;
 const TURNS = 360 / ROTATE_STEP_DEG;
 const angleOf = (turn: number) => (turn * ROTATE_STEP_DEG * Math.PI) / 180;
 
