@@ -169,7 +169,7 @@
 **Interfaces:**
 - Produces: `export const ROTATE_STEP_DEG = 45`、`export function createControls(canvas: HTMLCanvasElement, handlers: { onMove(x: number): void; onRotate(): void; onDrop(): void }): void`。
 
-- [ ] **Step 1: テストを書く。** (a) ドラッグで `onMove` に横位置が渡る。(b) 回転ボタンで `onRotate` が呼ばれる。(c) 指を離すと `onDrop` が1回呼ばれる。(d) ドラッグ中に2本目の指が触れても、`onDrop` が余分に呼ばれず、最初の指が離れるまで続く。(e) ポインターの種類がマウスでも、(a)〜(c) と同じように動く。
+- [ ] **Step 1: テストを書く。** (a) ドラッグで `onMove` に横位置が渡る。(b) 回転ボタンで `onRotate` が呼ばれる。(c) DROP ボタンで `onDrop` が呼ばれ、指を離しても呼ばれない。(d) ドラッグ中に2本目の指が触れても、最初の指を追い続ける。(e) ポインターの種類がマウスでも、(a)〜(c) と同じように動く。
 - [ ] **Step 2: テストが失敗することを確認する。**
 - [ ] **Step 3: `createControls` を実装する。** Pointer Events を使い、最初の指だけを追う。canvas に `touch-action: none`、`index.html` に `user-scalable=no` を付ける。回転ボタンは大きく、アイコンだけにする。
 - [ ] **Step 4: テストが通ることを確認する。**
