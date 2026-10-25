@@ -25,7 +25,7 @@ type Best = { count: number; height: number };
 const loadBest = (): Best => {
 	try {
 		const saved = JSON.parse(localStorage.getItem(RECORD_KEY) ?? "null");
-		if (saved) return { count: saved.count ?? 0, height: saved.height ?? 0 };
+		if (saved) return saved;
 	} catch {}
 	return { count: 0, height: 0 };
 };
@@ -86,9 +86,8 @@ let acc = 0;
 const frame = (now: number) => {
 	acc += last === null ? 0 : (now - last) / 1000;
 	last = now;
-	for (let i = 0; acc >= STEP_S; i++, acc -= STEP_S) {
-		if (i < MAX_STEPS_PER_FRAME) game.step(STEP_S);
-	}
+	acc = Math.min(acc, MAX_STEPS_PER_FRAME * STEP_S);
+	for (; acc >= STEP_S; acc -= STEP_S) game.step(STEP_S);
 	if (game.held) ensureSprite(game.held.id);
 	ensureSprite(game.upcoming);
 	updateHud();
