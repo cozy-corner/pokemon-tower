@@ -28,7 +28,7 @@ const SPRITE_SIZE = 128 / PIXELS_PER_METER;
 export function cameraTop(pieces: readonly Piece[]): number {
 	let towerTop = Number.POSITIVE_INFINITY;
 	for (const p of pieces) {
-		if (p.asleep) towerTop = Math.min(towerTop, p.y - PIECE_TOP_MARGIN);
+		towerTop = Math.min(towerTop, p.y - PIECE_TOP_MARGIN);
 	}
 	return Math.min(
 		INITIAL_CAMERA_TOP,
