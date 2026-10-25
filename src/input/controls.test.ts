@@ -31,7 +31,13 @@ function setup() {
 	const canvas = new FakeElement();
 	const button = new FakeElement();
 	const dropButton = new FakeElement();
-	const handlers = { onMove: vi.fn(), onRotate: vi.fn(), onDrop: vi.fn() };
+	const win = new FakeElement();
+	const handlers = {
+		onMove: vi.fn(),
+		onNudge: vi.fn(),
+		onRotate: vi.fn(),
+		onDrop: vi.fn(),
+	};
 	createControls(
 		canvas as unknown as HTMLCanvasElement,
 		{
@@ -39,8 +45,9 @@ function setup() {
 			drop: dropButton as unknown as HTMLElement,
 		},
 		handlers,
+		win,
 	);
-	return { canvas, button, dropButton, handlers };
+	return { canvas, button, dropButton, handlers, win };
 }
 
 const ptr = (pointerId: number, clientX: number, pointerType = "touch") => ({
@@ -119,5 +126,49 @@ describe("controls", () => {
 		expect(handlers.onMove).toHaveBeenCalledTimes(1);
 		canvas.dispatch("pointerdown", ptr(2, 200));
 		expect(handlers.onMove).toHaveBeenCalledTimes(2);
+	});
+
+	describe("keyboard", () => {
+		const key = (k: string, extra: object = {}) => ({
+			key: k,
+			preventDefault: vi.fn(),
+			...extra,
+		});
+
+		it.each([
+			["h", -1],
+			["ArrowLeft", -1],
+			["l", 1],
+			["ArrowRight", 1],
+		])("nudges on %s, including repeats", (k, sign) => {
+			const { win, handlers } = setup();
+			win.dispatch("keydown", key(k));
+			win.dispatch("keydown", key(k, { repeat: true }));
+			expect(handlers.onNudge).toHaveBeenCalledTimes(2);
+			expect(Math.sign(handlers.onNudge.mock.calls[0][0])).toBe(sign);
+		});
+
+		it.each(["k", "ArrowUp"])("rotates once on %s", (k) => {
+			const { win, handlers } = setup();
+			win.dispatch("keydown", key(k));
+			win.dispatch("keydown", key(k, { repeat: true }));
+			expect(handlers.onRotate).toHaveBeenCalledTimes(1);
+		});
+
+		it.each(["j", "ArrowDown", " ", "Enter"])("drops once on %s", (k) => {
+			const { win, handlers } = setup();
+			win.dispatch("keydown", key(k));
+			win.dispatch("keydown", key(k, { repeat: true }));
+			expect(handlers.onDrop).toHaveBeenCalledTimes(1);
+		});
+
+		it("leaves browser shortcuts and other keys alone", () => {
+			const { win, handlers } = setup();
+			const e = key("l", { metaKey: true });
+			win.dispatch("keydown", e);
+			win.dispatch("keydown", key("x"));
+			expect(handlers.onNudge).not.toHaveBeenCalled();
+			expect(e.preventDefault).not.toHaveBeenCalled();
+		});
 	});
 });

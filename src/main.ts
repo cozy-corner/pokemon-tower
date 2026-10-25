@@ -93,6 +93,7 @@ createControls(
 	{ rotate: el("rotate"), drop: el("drop") },
 	{
 		onMove: (x) => game.move(x),
+		onNudge: (dx) => game.move((game.held?.x ?? 0) + dx),
 		onRotate: () => game.rotate(),
 		onDrop: () => {
 			// An invisible piece would stay on the tower.
