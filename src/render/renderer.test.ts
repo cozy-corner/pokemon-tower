@@ -31,6 +31,12 @@ describe("cameraTop", () => {
 		);
 	});
 
+	it("also frames a held piece that is higher than the tower", () => {
+		expect(cameraTop([piece(-30), { y: -45 }])).toBeLessThan(
+			cameraTop([piece(-30)]),
+		);
+	});
+
 	it("never goes below the initial view", () => {
 		expect(cameraTop([piece(-1)])).toBe(INITIAL_CAMERA_TOP);
 	});

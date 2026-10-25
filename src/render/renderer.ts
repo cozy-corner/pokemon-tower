@@ -29,7 +29,7 @@ const TOWER_TOP_FRACTION = 0.3;
 const GRASS_THICKNESS = 0.3;
 
 /** World y at the top edge of the screen. Never lower than the initial view. */
-export function cameraTop(pieces: readonly Piece[]): number {
+export function cameraTop(pieces: readonly { y: number }[]): number {
 	let towerTop = Number.POSITIVE_INFINITY;
 	for (const p of pieces) {
 		towerTop = Math.min(towerTop, p.y - PIECE_TOP_MARGIN);
@@ -77,13 +77,14 @@ export function createRenderer(
 			ctx.setTransform(1, 0, 0, 1, 0, 0);
 			ctx.fillStyle = "#4ddcff";
 			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			const view = held ? [...pieces, held] : pieces;
 			ctx.setTransform(
 				scale,
 				0,
 				0,
 				scale,
 				(VIEW_WIDTH / 2) * scale,
-				-cameraTop(pieces) * scale,
+				-cameraTop(view) * scale,
 			);
 			ctx.fillStyle = "#a8654a";
 			ctx.fillRect(
