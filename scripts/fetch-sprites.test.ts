@@ -11,7 +11,13 @@ import {
 	type MockInstance,
 	vi,
 } from "vitest";
-import { assertNotShrinking, fetchSprites, parseNames } from "./fetch-sprites";
+import {
+	assertNotShrinking,
+	fetchSprites,
+	isSvg,
+	parseDex,
+	parseNames,
+} from "./fetch-sprites";
 
 describe("parseNames", () => {
 	it("extracts a name from a sprite link", () => {
@@ -33,6 +39,31 @@ describe("parseNames", () => {
 	});
 });
 
+describe("parseDex", () => {
+	it("reads the number and name from each card, first card wins", () => {
+		const card = (n: string, name: string) =>
+			`<span class="infocard-lg-data"><small>#${n}</small><br> <a class="ent-name" href="/pokedex/${name}">X</a><br></span>`;
+		expect(
+			parseDex(
+				card("0025", "pikachu") +
+					card("0122", "mr-mime") +
+					card("0999", "pikachu"),
+			),
+		).toEqual({ pikachu: 25, "mr-mime": 122 });
+	});
+});
+
+describe("isSvg", () => {
+	const bytes = (t: string) => new TextEncoder().encode(t);
+	it("accepts svg and xml prologs", () => {
+		expect(isSvg(bytes('<svg xmlns="x"></svg>'))).toBe(true);
+		expect(isSvg(bytes('\n<?xml version="1.0"?><svg/>'))).toBe(true);
+	});
+	it("rejects HTML", () => {
+		expect(isSvg(bytes("<html>blocked</html>"))).toBe(false);
+	});
+});
+
 describe("assertNotShrinking", () => {
 	it("throws on an empty list", () => {
 		expect(() => assertNotShrinking(["a"], [])).toThrow();
@@ -49,9 +80,9 @@ describe("assertNotShrinking", () => {
 	});
 });
 
-const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
-const pngBody = (...rest: number[]) =>
-	new Uint8Array([...PNG_SIGNATURE, ...rest]);
+const svgBody = (extra = "") =>
+	new TextEncoder().encode(`<svg xmlns="x">${extra}</svg>`);
+const item = (name: string) => ({ name, url: `https://host/${name}.svg` });
 
 describe("fetchSprites", () => {
 	let log: MockInstance;
@@ -69,32 +100,44 @@ describe("fetchSprites", () => {
 		const fetchMock = vi.fn();
 		vi.stubGlobal("fetch", fetchMock);
 		const dir = await tmp();
-		await writeFile(join(dir, "pikachu.png"), "x");
-		expect(await fetchSprites(["pikachu"], dir)).toEqual({
+		await writeFile(join(dir, "pikachu.svg"), "x");
+		expect(await fetchSprites([item("pikachu")], dir)).toEqual({
 			ok: ["pikachu"],
+			missing: [],
 			failed: [],
 		});
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
 
-	it.each([404, 500])(
-		"records HTTP %i as failed, writes no file and logs the status",
-		async (status) => {
-			vi.stubGlobal(
-				"fetch",
-				vi.fn(async () => new Response("", { status })),
-			);
-			const dir = await tmp();
-			expect(await fetchSprites(["missing"], dir)).toEqual({
-				ok: [],
-				failed: ["missing"],
-			});
-			expect(existsSync(join(dir, "missing.png"))).toBe(false);
-			expect(log).toHaveBeenCalledWith(
-				expect.stringContaining(`missing (HTTP ${status})`),
-			);
-		},
-	);
+	it("records a 404 as missing without logging or writing a file", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => new Response("", { status: 404 })),
+		);
+		const dir = await tmp();
+		expect(await fetchSprites([item("gone")], dir)).toEqual({
+			ok: [],
+			missing: ["gone"],
+			failed: [],
+		});
+		expect(await readdir(dir)).toEqual([]);
+		expect(log).not.toHaveBeenCalled();
+	});
+
+	it("records HTTP 500 as failed, writes no file and logs the status", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => new Response("", { status: 500 })),
+		);
+		const dir = await tmp();
+		expect(await fetchSprites([item("bad")], dir)).toEqual({
+			ok: [],
+			missing: [],
+			failed: ["bad"],
+		});
+		expect(existsSync(join(dir, "bad.svg"))).toBe(false);
+		expect(log).toHaveBeenCalledWith(expect.stringContaining("bad (HTTP 500)"));
+	});
 
 	it("records a thrown network error as failed, writes no file and logs the error", async () => {
 		vi.stubGlobal(
@@ -104,11 +147,12 @@ describe("fetchSprites", () => {
 			}),
 		);
 		const dir = await tmp();
-		expect(await fetchSprites(["boom"], dir)).toEqual({
+		expect(await fetchSprites([item("boom")], dir)).toEqual({
 			ok: [],
+			missing: [],
 			failed: ["boom"],
 		});
-		expect(existsSync(join(dir, "boom.png"))).toBe(false);
+		expect(existsSync(join(dir, "boom.svg"))).toBe(false);
 		expect(log).toHaveBeenCalledWith(expect.stringContaining("boom (network)"));
 	});
 
@@ -116,60 +160,58 @@ describe("fetchSprites", () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async (url: string) =>
-				url.endsWith("/missing.png")
-					? new Response("", { status: 404 })
-					: new Response(pngBody(1, 2, 3), { status: 200 }),
+				url.endsWith("/bad.svg")
+					? new Response("", { status: 500 })
+					: new Response(svgBody(), { status: 200 }),
 			),
 		);
 		const dir = await tmp();
-		expect(await fetchSprites(["missing", "eevee"], dir)).toEqual({
+		expect(await fetchSprites([item("bad"), item("eevee")], dir)).toEqual({
 			ok: ["eevee"],
-			failed: ["missing"],
+			missing: [],
+			failed: ["bad"],
 		});
-		expect(existsSync(join(dir, "eevee.png"))).toBe(true);
+		expect(existsSync(join(dir, "eevee.svg"))).toBe(true);
 	});
 
-	it("sends a User-Agent header", async () => {
+	it("fetches the given url with a User-Agent header", async () => {
 		const fetchMock = vi.fn(
-			async () => new Response(pngBody(1), { status: 200 }),
+			async () => new Response(svgBody(), { status: 200 }),
 		);
 		vi.stubGlobal("fetch", fetchMock);
-		await fetchSprites(["mew"], await tmp());
-		expect(fetchMock).toHaveBeenCalledWith(
-			"https://img.pokemondb.net/sprites/home/normal/1x/mew.png",
-			{ headers: { "User-Agent": "Mozilla/5.0" } },
-		);
+		await fetchSprites([item("mew")], await tmp());
+		expect(fetchMock).toHaveBeenCalledWith("https://host/mew.svg", {
+			headers: { "User-Agent": "Mozilla/5.0" },
+		});
 	});
 
 	it("writes the full body to the final path and leaves no .part file", async () => {
 		vi.stubGlobal(
 			"fetch",
-			vi.fn(async () => new Response(pngBody(9, 8, 7), { status: 200 })),
+			vi.fn(async () => new Response(svgBody("<g/>"), { status: 200 })),
 		);
 		const dir = await tmp();
-		await fetchSprites(["mew"], dir);
-		expect([...(await readFile(join(dir, "mew.png")))]).toEqual([
-			...PNG_SIGNATURE,
-			9,
-			8,
-			7,
-		]);
-		expect(await readdir(dir)).toEqual(["mew.png"]);
+		await fetchSprites([item("mew")], dir);
+		expect(await readFile(join(dir, "mew.svg"), "utf8")).toBe(
+			'<svg xmlns="x"><g/></svg>',
+		);
+		expect(await readdir(dir)).toEqual(["mew.svg"]);
 	});
 
-	it("treats a 200 non-PNG body as failed, writes nothing and logs the reason", async () => {
+	it("treats a 200 non-SVG body as failed, writes nothing and logs the reason", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async () => new Response("<html>blocked</html>", { status: 200 })),
 		);
 		const dir = await tmp();
-		expect(await fetchSprites(["mew"], dir)).toEqual({
+		expect(await fetchSprites([item("mew")], dir)).toEqual({
 			ok: [],
+			missing: [],
 			failed: ["mew"],
 		});
 		expect(await readdir(dir)).toEqual([]);
 		expect(log).toHaveBeenCalledWith(
-			expect.stringContaining("mew (not a PNG)"),
+			expect.stringContaining("mew (not an SVG)"),
 		);
 	});
 });
