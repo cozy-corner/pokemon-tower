@@ -38,6 +38,8 @@ export type Game = {
 	pieces(): Piece[];
 	step(dt: number): void;
 	move(x: number): void;
+	/** Shifts the held piece by dx, clamped like `move`. */
+	nudge(dx: number): void;
 	rotate(): void;
 	drop(): void;
 	reportBroken(name: string): void;
@@ -146,6 +148,9 @@ export function createGame({
 		move(nx) {
 			if (state !== "HOLDING") return;
 			x = Math.max(-MAX_HOLD_X, Math.min(MAX_HOLD_X, nx));
+		},
+		nudge(dx) {
+			this.move(x + dx);
 		},
 		rotate() {
 			if (state !== "HOLDING") return;
