@@ -4,7 +4,7 @@ import { createGame } from "./game/game";
 import type { Vec } from "./geometry/types";
 import { createControls } from "./input/controls";
 import { createWorld } from "./physics/world";
-import { createRenderer } from "./render/renderer";
+import { createRenderer, isReady } from "./render/renderer";
 
 type Shapes = Record<string, { polygons: Vec[][] }>;
 
@@ -80,7 +80,7 @@ createControls(canvas, el("rotate"), {
 	onDrop: () => {
 		// An invisible piece would stay on the tower.
 		const img = game.held && sprites.get(game.held.id);
-		if (img?.complete && img.naturalWidth > 0) game.drop();
+		if (img && isReady(img)) game.drop();
 	},
 });
 

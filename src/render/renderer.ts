@@ -8,6 +8,10 @@ import {
 	VIEW_WIDTH,
 } from "../physics/world";
 
+/** A broken image is `complete` with no width. */
+export const isReady = (img: HTMLImageElement) =>
+	img.complete && img.naturalWidth > 0;
+
 export type Renderer = {
 	draw(pieces: readonly Piece[], held: HeldPiece | null): void;
 };
@@ -50,7 +54,7 @@ export function createRenderer(
 
 	const drawPiece = (p: HeldPiece) => {
 		const img = sprites.get(p.id);
-		if (!img?.complete || img.naturalWidth === 0) return;
+		if (!img || !isReady(img)) return;
 		ctx.save();
 		ctx.translate(p.x, p.y);
 		ctx.rotate(p.angle);
