@@ -67,7 +67,6 @@ export function createGame({
 	let stackedCount = 0;
 	let heightM = 0;
 	let settleElapsed = 0;
-	let settleSteps = 0;
 	let x = 0;
 	let turn = 0;
 
@@ -124,9 +123,8 @@ export function createGame({
 			if (fallen.length > 0) refreshStats();
 			if (state !== "SETTLING") return;
 			settleElapsed += dt;
-			settleSteps++;
 			const asleep = world.pieces().every((p) => p.asleep);
-			if ((asleep && settleSteps >= 1) || settleElapsed >= SPAWN_TIMEOUT_S) {
+			if (asleep || settleElapsed >= SPAWN_TIMEOUT_S) {
 				refreshStats();
 				spawn();
 			}
@@ -143,7 +141,6 @@ export function createGame({
 			if (state !== "HOLDING") return;
 			world.addPiece(heldName, polygonsOf(heldName), x, angleOf(turn));
 			settleElapsed = 0;
-			settleSteps = 0;
 			state = "SETTLING";
 		},
 		reportBroken(name) {
