@@ -117,7 +117,6 @@ const frame = (now: number) => {
 	updateHud();
 	renderer.draw(game.pieces(), game.held);
 	requestAnimationFrame(frame);
-	startBgmOnFirstGesture(Math.random);
 };
 requestAnimationFrame(frame);
 startBgmOnFirstGesture(Math.random);
