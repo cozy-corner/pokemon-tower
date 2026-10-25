@@ -22,10 +22,10 @@ const BUTTON_BAND = 0.18 * VIEW_HEIGHT;
 /** World y at the screen bottom. */
 const VIEW_BOTTOM_Y = PEDESTAL_THICKNESS + BUTTON_BAND;
 export const INITIAL_CAMERA_TOP = VIEW_BOTTOM_Y - VIEW_HEIGHT;
-/** Piece has no vertex info, so assume a piece reaches this far above its center. */
-const PIECE_TOP_MARGIN = 2.5;
+/** Piece has no vertex info, so assume a piece reaches this far above its center (the largest sprite is 1.77). */
+const PIECE_TOP_MARGIN = 1.8;
 /** Where the tower top sits on screen, as a fraction of the view from the top. */
-const TOWER_TOP_FRACTION = 0.3;
+const TOWER_TOP_FRACTION = 0.2;
 const GRASS_THICKNESS = 0.3;
 
 /** World y at the top edge of the screen. Never lower than the initial view. */
