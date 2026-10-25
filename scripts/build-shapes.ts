@@ -4,6 +4,8 @@ import { PNG } from "pngjs";
 import { polygonArea } from "../src/geometry/polygon";
 import {
 	type OutlineResult,
+	type Shape,
+	type SpriteSize,
 	spriteWorldSize,
 	type Vec,
 } from "../src/geometry/types";
@@ -112,6 +114,8 @@ export function buildShapes(
 /** Rasterized copies are kept (gitignored) for looking at what the outlines were computed from. */
 const CACHE_DIR = ".cache/sprites-png";
 
+const sizes = new Map<string, SpriteSize>();
+
 async function loadSvgMask(name: string): Promise<Mask> {
 	const svg = await readFile(root(`public/sprites/${name}.svg`), "utf8");
 	const { png: bytes, svgWidth, svgHeight } = rasterizeSvg(svg);
@@ -121,11 +125,13 @@ async function loadSvgMask(name: string): Promise<Mask> {
 		{ length: png.width * png.height },
 		(_, i) => png.data[i * 4 + 3],
 	);
+	const size = spriteWorldSize(svgWidth, svgHeight);
+	sizes.set(name, size);
 	return {
 		alpha,
 		w: png.width,
 		h: png.height,
-		metersPerPx: spriteWorldSize(svgWidth, svgHeight).w / png.width,
+		metersPerPx: size.w / png.width,
 	};
 }
 
@@ -152,8 +158,13 @@ async function main(): Promise<void> {
 		names,
 		(name) => masks.get(name) ?? null,
 	);
+	const stored: Record<string, Shape> = {};
+	for (const [name, shape] of Object.entries(shapes)) {
+		const size = sizes.get(name) as SpriteSize;
+		stored[name] = { ...shape, size: { w: round(size.w), h: round(size.h) } };
+	}
 	await mkdir(root("data"), { recursive: true });
-	await writeFile(root("public/shapes.json"), JSON.stringify(shapes));
+	await writeFile(root("public/shapes.json"), JSON.stringify(stored));
 	await writeFile(
 		root("data/flagged.json"),
 		`${JSON.stringify(flagged, null, "\t")}\n`,
