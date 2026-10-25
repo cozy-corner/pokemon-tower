@@ -3,6 +3,7 @@ import { PIXELS_PER_METER } from "../geometry/types";
 import {
 	PEDESTAL_HALF_WIDTH,
 	PEDESTAL_THICKNESS,
+	PEDESTAL_TOP_Y,
 	type Piece,
 	VIEW_WIDTH,
 } from "../physics/world";
@@ -42,7 +43,7 @@ export function createRenderer(
 	const dpr = window.devicePixelRatio || 1;
 	// Backing store is sized once; CSS scales it to the window.
 	canvas.width = Math.round(BACKING_WIDTH * dpr);
-	canvas.height = Math.round((BACKING_WIDTH * 16 * dpr) / 9);
+	canvas.height = Math.round((canvas.width * VIEW_HEIGHT) / VIEW_WIDTH);
 	const ctx = canvas.getContext("2d");
 	if (!ctx) throw new Error("2d context unavailable");
 	const scale = canvas.width / VIEW_WIDTH;
@@ -79,7 +80,7 @@ export function createRenderer(
 			ctx.fillStyle = "#8a6a4a";
 			ctx.fillRect(
 				-PEDESTAL_HALF_WIDTH,
-				0,
+				PEDESTAL_TOP_Y,
 				PEDESTAL_HALF_WIDTH * 2,
 				PEDESTAL_THICKNESS,
 			);
