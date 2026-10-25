@@ -163,6 +163,13 @@ describe("createGame", () => {
 		expect(game.state).toBe("HOLDING");
 	});
 
+	it("numbers the held piece from 1 and counts each drop, falls included", () => {
+		const { game } = setup({ polygons: [box(0.5, 1)] });
+		expect(game.pieceNumber).toBe(1);
+		settle(game);
+		expect(game.pieceNumber).toBe(2);
+	});
+
 	it("measures height from the pedestal top to the highest point (d)", () => {
 		const { game, world } = setup({ polygons: [box(0.5, 1)] });
 		settle(game);

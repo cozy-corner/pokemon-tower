@@ -58,7 +58,18 @@ const ensureSprite = (name: string) => {
 
 const best = loadBest();
 let shown = "";
+let shownPiece = "";
+const updateLabel = () => {
+	const held = game.held;
+	if (!held) return;
+	const key = `${game.pieceNumber}.${held.id}`;
+	if (key === shownPiece) return;
+	shownPiece = key;
+	el("piece-no").textContent = String(game.pieceNumber);
+	el("piece-name").textContent = held.id.replaceAll("-", " ");
+};
 const updateHud = () => {
+	updateLabel();
 	const h = game.heightM;
 	if (game.stackedCount > best.count || h > best.height) {
 		best.count = Math.max(best.count, game.stackedCount);

@@ -19,6 +19,12 @@
       .stat svg { width: 32px; height: 32px; flex: none; }
       .stat b { font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; }
       .stat small { font-size: 18px; font-weight: 700; }
+      #label {
+        position: absolute; top: 14%; left: 0; padding: 4px 18px 4px 12px;
+        border-radius: 0 999px 999px 0; background: rgba(20, 90, 140, 0.45);
+        color: #fff; font: 800 16px system-ui, sans-serif; letter-spacing: 0.04em;
+        text-transform: uppercase; pointer-events: none; user-select: none; -webkit-user-select: none;
+      }
       .best { font-size: 14px; margin-top: 4px; opacity: 0.75; }
       .end { text-align: right; }
       .stat.end { justify-content: flex-end; }
@@ -52,6 +58,7 @@
           <div class="best">ベスト <span id="best-height">0.0</span> m</div>
         </div>
       </div>
+      <div id="label"><span id="piece-no">1</span>. <span id="piece-name"></span></div>
       <div id="bar">
         <button id="rotate" type="button" aria-label="回転">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
