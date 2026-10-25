@@ -7,7 +7,6 @@ import {
 	VIEW_WIDTH,
 	type World,
 } from "../physics/world";
-import type { HeldPiece } from "../render/renderer";
 
 /** Longest wait for the tower to sleep: the slowest sprite takes 17 to 18 s. */
 export const SPAWN_TIMEOUT_S = 20;
@@ -18,6 +17,13 @@ const HOLD_HEIGHT = 3;
 const MAX_HOLD_X = VIEW_WIDTH / 2 - 1;
 const TURNS = 360 / ROTATE_STEP_DEG;
 const angleOf = (turn: number) => (turn * ROTATE_STEP_DEG * Math.PI) / 180;
+
+export type HeldPiece = {
+	readonly id: string;
+	readonly x: number;
+	readonly y: number;
+	readonly angle: number;
+};
 
 export type GameState = "HOLDING" | "SETTLING";
 

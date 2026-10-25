@@ -1,3 +1,4 @@
+import type { HeldPiece } from "../game/game";
 import { PIXELS_PER_METER } from "../geometry/types";
 import {
 	PEDESTAL_HALF_WIDTH,
@@ -5,13 +6,6 @@ import {
 	type Piece,
 	VIEW_WIDTH,
 } from "../physics/world";
-
-export type HeldPiece = {
-	readonly id: string;
-	readonly x: number;
-	readonly y: number;
-	readonly angle: number;
-};
 
 export type Renderer = {
 	draw(pieces: readonly Piece[], held: HeldPiece | null): void;
