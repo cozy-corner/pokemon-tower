@@ -75,8 +75,6 @@ export function createGame({
 	let settleElapsed = 0;
 	let x = 0;
 	let turn = 0;
-	// A finger already down while the last piece settled must not drop the next one.
-	let touched = false;
 
 	// A world id must be unique, so names already on the tower are skipped.
 	const pick = (previous: string | null) => {
@@ -101,7 +99,6 @@ export function createGame({
 	const spawn = () => {
 		advance();
 		turn = 0;
-		touched = false;
 		heldY = world.highestPoint() - HOLD_HEIGHT;
 		state = "HOLDING";
 	};
@@ -144,7 +141,6 @@ export function createGame({
 		},
 		move(nx) {
 			if (state !== "HOLDING") return;
-			touched = true;
 			x = Math.max(-MAX_HOLD_X, Math.min(MAX_HOLD_X, nx));
 		},
 		rotate() {
@@ -152,7 +148,7 @@ export function createGame({
 			turn = (turn + 1) % TURNS;
 		},
 		drop() {
-			if (state !== "HOLDING" || !touched) return;
+			if (state !== "HOLDING") return;
 			world.addPiece(heldName, polygonsOf(heldName), x, angleOf(turn));
 			settleElapsed = 0;
 			state = "SETTLING";

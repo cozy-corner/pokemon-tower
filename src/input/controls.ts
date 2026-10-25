@@ -2,7 +2,7 @@ import { VIEW_WIDTH } from "../physics/world";
 
 export function createControls(
 	canvas: HTMLCanvasElement,
-	rotateButton: HTMLElement,
+	buttons: { rotate: HTMLElement; drop: HTMLElement },
 	handlers: { onMove(x: number): void; onRotate(): void; onDrop(): void },
 ): void {
 	let active: number | null = null;
@@ -32,12 +32,11 @@ export function createControls(
 	canvas.addEventListener("pointerup", (e) => {
 		if (e.pointerId !== active) return;
 		stop(e);
-		handlers.onDrop();
 	});
-	// A cancelled gesture (e.g. system takeover) is not a deliberate release.
 	canvas.addEventListener("pointercancel", (e) => {
 		if (e.pointerId !== active) return;
 		stop(e);
 	});
-	rotateButton.addEventListener("click", () => handlers.onRotate());
+	buttons.rotate.addEventListener("click", () => handlers.onRotate());
+	buttons.drop.addEventListener("click", () => handlers.onDrop());
 }

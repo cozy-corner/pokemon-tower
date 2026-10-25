@@ -22,15 +22,21 @@
       .best { font-size: 14px; margin-top: 4px; opacity: 0.75; }
       .end { text-align: right; }
       .stat.end { justify-content: flex-end; }
-      #rotate {
-        position: absolute; left: 50%; bottom: 4%; transform: translateX(-50%);
-        width: 72px; height: 72px; padding: 0; border: 0; border-radius: 50%;
-        background: rgba(255, 255, 255, 0.85); color: #222;
+      #bar {
+        position: absolute; left: 6%; right: 6%; bottom: 4%;
+        display: flex; align-items: center; justify-content: center; gap: 4%;
+      }
+      #bar button {
+        height: 72px; padding: 0; border: 0; border-radius: 18px; color: #fff;
         display: grid; place-items: center;
+        box-shadow: 0 5px 0 rgba(0, 0, 0, 0.25);
         user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
         touch-action: manipulation;
       }
-      #rotate svg { width: 44px; height: 44px; }
+      #bar button:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25); }
+      #rotate { width: 72px; background: #ffb81f; }
+      #drop { flex: 1; max-width: 200px; background: #ff5a1f; }
+      #bar svg { width: 48px; height: 48px; }
     </style>
   </head>
   <body>
@@ -46,12 +52,20 @@
           <div class="best">ベスト <span id="best-height">0.0</span> m</div>
         </div>
       </div>
-      <button id="rotate" type="button" aria-label="回転">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M20 12a8 8 0 1 1-2.5-5.8" />
-          <path d="M20 3v5h-5" />
-        </svg>
-      </button>
+      <div id="bar">
+        <button id="rotate" type="button" aria-label="回転">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 12a8 8 0 1 1-2.5-5.8" />
+            <path d="M20 3v5h-5" />
+          </svg>
+        </button>
+        <button id="drop" type="button" aria-label="落とす">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 4v15" />
+            <path d="M5 13l7 7 7-7" />
+          </svg>
+        </button>
+      </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
