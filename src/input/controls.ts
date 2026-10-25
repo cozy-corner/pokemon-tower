@@ -1,7 +1,5 @@
 import { VIEW_WIDTH } from "../physics/world";
 
-export const ROTATE_STEP_DEG = 45;
-
 export function createControls(
 	canvas: HTMLCanvasElement,
 	rotateButton: HTMLElement,

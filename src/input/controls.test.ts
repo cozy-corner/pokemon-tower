@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { VIEW_WIDTH } from "../physics/world";
-import { createControls, ROTATE_STEP_DEG } from "./controls";
+import { createControls } from "./controls";
 
 type Listener = (e: unknown) => void;
 
@@ -47,10 +47,6 @@ const ptr = (pointerId: number, clientX: number, pointerType = "touch") => ({
 });
 
 describe("controls", () => {
-	it("exports a 45 degree rotate step", () => {
-		expect(ROTATE_STEP_DEG).toBe(45);
-	});
-
 	it("passes world x on down and move", () => {
 		const { canvas, handlers } = setup();
 		canvas.dispatch("pointerdown", ptr(1, 200));
