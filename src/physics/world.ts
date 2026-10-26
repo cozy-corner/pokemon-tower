@@ -16,8 +16,8 @@ export const PEDESTAL_TOP_Y = 0;
  * and about 3.9 times the median Pokémon (about 23% of the width); on 0.67
  * aspect screens it is 70%, so sizes follow the screen height. Tuned together
  * with MIN_SPRITE_SIDE and MAX_SPRITE_SIDE (geometry/sprite-size.ts) so the
- * median sprite is about a quarter of the
- * width; `bun run build-shapes` prints the bounding-box widths to check it. */
+ * median sprite is about a quarter of the width; `bun run build-shapes`
+ * prints the bounding-box widths to check it. */
 export const VIEW_WIDTH = 7;
 /** Pedestal widths as fractions of VIEW_WIDTH. `large` is from the play
  * screenshots above. `small` and `medium` are from the animal game, unchecked. */
