@@ -11,6 +11,7 @@ export const MAX_SPRITE_SIDE = 3.0;
 /** Real heights in metres that map to the two ends (sinistea and wailord). */
 export const MIN_HEIGHT_M = 0.1;
 export const MAX_HEIGHT_M = 14.5;
+const LOG_RANGE = Math.log(MAX_HEIGHT_M / MIN_HEIGHT_M);
 
 /**
  * World size of a sprite. The longest side follows the real height on a log
@@ -22,10 +23,8 @@ export function spriteWorldSize(
 	svgHeight: number,
 	heightM: number,
 ): SpriteSize {
-	const t =
-		Math.log(
-			Math.min(Math.max(heightM, MIN_HEIGHT_M), MAX_HEIGHT_M) / MIN_HEIGHT_M,
-		) / Math.log(MAX_HEIGHT_M / MIN_HEIGHT_M);
+	const h = Math.min(Math.max(heightM, MIN_HEIGHT_M), MAX_HEIGHT_M);
+	const t = Math.log(h / MIN_HEIGHT_M) / LOG_RANGE;
 	const side = MIN_SPRITE_SIDE + t * (MAX_SPRITE_SIDE - MIN_SPRITE_SIDE);
 	const k = side / Math.max(svgWidth, svgHeight);
 	return { w: svgWidth * k, h: svgHeight * k };
