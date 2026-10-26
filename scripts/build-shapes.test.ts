@@ -36,12 +36,12 @@ describe("flagReasons", () => {
 });
 
 describe("roundResult", () => {
-	it("rounds coordinates to 4 decimals and keeps stats", () => {
+	it("rounds coordinates to 5 decimals and keeps stats", () => {
 		const r: OutlineResult = {
 			polygons: [[{ x: 0.123456, y: -0.03125 }]],
 			stats: { components: 1, fillOverHull: 0.5, thin: false },
 		};
-		expect(roundResult(r).polygons).toEqual([[{ x: 0.1235, y: -0.0313 }]]);
+		expect(roundResult(r).polygons).toEqual([[{ x: 0.12346, y: -0.03125 }]]);
 		expect(roundResult(r).stats).toEqual(r.stats);
 	});
 });

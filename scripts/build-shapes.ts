@@ -20,7 +20,7 @@ import { rasterizeSvg } from "./rasterize";
 export type FlagReason = "multi-island" | "low-fill" | "thin";
 
 const LOW_FILL = 0.45;
-const DECIMALS = 4;
+const DECIMALS = 5;
 
 const root = (path: string) => new URL(`../${path}`, import.meta.url);
 
