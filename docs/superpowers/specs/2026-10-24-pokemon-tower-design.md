@@ -57,7 +57,7 @@
 
 ### 全体
 - ブラウザで動く **TypeScript + Vite**(ユーザー決定)。物理は Planck.js。遊ぶときの配り方は、Vite の開発サーバーを家の Wi-Fi 内の他端末から開ける設定にするか、ビルドして固めたファイルを配るかを、第1段階の最後に、実際に遊べる状態で Mac と、遊ぶ端末で試して決める(どちらも未検証。遊ぶ用途では後者のほうが安定する可能性がある)。
-- 素材は **PokeAPI の dream-world SVG**(`.../sprites/pokemon/other/dream-world/{図鑑番号}.svg`、ユーザー決定。HOME は以前の誤った選択)。SVG は256px の長辺に描いて輪郭を取り、大きさは SVG の固有サイズ ÷ `SVG_UNITS_PER_METER`(長辺は上限あり)で決める。
+- 素材は **PokeAPI の dream-world SVG**(`.../sprites/pokemon/other/dream-world/{図鑑番号}.svg`、ユーザー決定。HOME は以前の誤った選択)。SVG は256px の長辺に描いて輪郭を取り、大きさは実際の身長(`data/heights.json`、PokeAPI)を対数で圧縮して長辺に割り当て、SVG は縦横比だけに使う(`src/geometry/sprite-size.ts`)。
 
 ### 段階
 1. **第1段階: 1台の端末で遊べるひとり用の積み上げ。**(ユーザー決定。対戦は含めない)
