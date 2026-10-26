@@ -1,9 +1,11 @@
 import { Polygon, Settings, Vec2 } from "planck";
 import { describe, expect, it } from "vitest";
 import exclusions from "../../data/exclusions.json";
+import heights from "../../data/heights.json";
 import names from "../../data/names.json";
 import shapes from "../../public/shapes.json";
-import type { OutlineResult, Vec } from "../geometry/types";
+import { spriteWorldSize } from "../geometry/sprite-size";
+import type { OutlineResult, Shape, Vec } from "../geometry/types";
 
 /**
  * Problems Planck would hide: it cuts polygons to maxPolygonVertices, drops
@@ -82,5 +84,37 @@ describe("public/shapes.json", () => {
 
 	it("only has polygons Planck keeps exactly as given", () => {
 		expect(all.flatMap(([name, s]) => problems(name, s.polygons))).toEqual([]);
+	});
+});
+
+describe("data/heights.json", () => {
+	it("has a height for every name", () => {
+		expect(Object.keys(heights).sort()).toEqual([...names].sort());
+	});
+
+	// PokeAPI reports decimetres, so a missing /10 would give 1 to 200.
+	it("holds real heights in metres", () => {
+		const metres = Object.values(heights as Record<string, number>);
+		expect(Math.min(...metres)).toBeGreaterThanOrEqual(0.1);
+		expect(Math.max(...metres)).toBeLessThanOrEqual(25);
+	});
+});
+
+describe("sprite sizes in public/shapes.json", () => {
+	it("follow each Pokémon's height", () => {
+		const bad = Object.entries(shapes as Record<string, Shape>).filter(
+			([name, { size }]) => {
+				const expected = spriteWorldSize(
+					size.w,
+					size.h,
+					(heights as Record<string, number>)[name],
+				);
+				return (
+					Math.abs(expected.w - size.w) > 1e-3 ||
+					Math.abs(expected.h - size.h) > 1e-3
+				);
+			},
+		);
+		expect(bad.map(([name]) => name)).toEqual([]);
 	});
 });
