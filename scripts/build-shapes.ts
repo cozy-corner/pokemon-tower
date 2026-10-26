@@ -20,6 +20,7 @@ import { rasterizeSvg } from "./rasterize";
 export type FlagReason = "multi-island" | "low-fill" | "thin";
 
 const LOW_FILL = 0.45;
+// At 4 decimals greninja and sliggoo lose convexity once rounded at this sprite scale.
 const DECIMALS = 5;
 
 const root = (path: string) => new URL(`../${path}`, import.meta.url);
@@ -157,6 +158,7 @@ async function main(): Promise<void> {
 	const loaded = new Map<string, { mask: Mask; size: SpriteSize }>();
 	for (const name of names) {
 		try {
+			if (!(heights[name] > 0)) throw new Error("no height in heights.json");
 			loaded.set(name, await loadSvgMask(name, heights[name]));
 		} catch (e) {
 			console.error(
