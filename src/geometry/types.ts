@@ -5,12 +5,13 @@ export type OutlineResult = {
 };
 
 /**
- * Longest side a sprite may have, in world units. The shortest Pokémon gets the
- * minimum (0.9, about 13% of the view, the smallest measured in the original)
- * and the tallest the maximum, so VIEW_WIDTH (see world.ts) is tuned against these.
+ * Longest side of the shortest and tallest Pokémon, in world units. Tuned so
+ * the median sprite is about 1.5 wide, a quarter of the pedestal, as in the
+ * original's screenshots (which only show 0.3 to 1.5 m Pokémon, so the ends
+ * are not measured).
  */
-export const MIN_SPRITE_SIDE = 0.9;
-export const MAX_SPRITE_SIDE = 3.5;
+export const MIN_SPRITE_SIDE = 0.7;
+export const MAX_SPRITE_SIDE = 3.0;
 /** Real heights in metres that map to the two ends (sinistea and wailord). */
 export const MIN_HEIGHT_M = 0.1;
 export const MAX_HEIGHT_M = 14.5;
