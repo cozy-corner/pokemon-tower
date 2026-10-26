@@ -2,12 +2,12 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { PNG } from "pngjs";
 import { polygonArea } from "../src/geometry/polygon";
-import {
-	type OutlineResult,
-	type Shape,
-	type SpriteSize,
-	spriteWorldSize,
-	type Vec,
+import { spriteWorldSize } from "../src/geometry/sprite-size";
+import type {
+	OutlineResult,
+	Shape,
+	SpriteSize,
+	Vec,
 } from "../src/geometry/types";
 import {
 	computeOutline,
