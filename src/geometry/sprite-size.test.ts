@@ -5,7 +5,7 @@ import {
 	MIN_HEIGHT_M,
 	MIN_SPRITE_SIDE,
 	spriteWorldSize,
-} from "./types";
+} from "./sprite-size";
 
 describe("spriteWorldSize", () => {
 	it("gives the shortest Pokémon the minimum side and the tallest the maximum", () => {
