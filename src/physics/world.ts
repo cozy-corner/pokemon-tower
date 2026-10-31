@@ -19,9 +19,7 @@ export const PEDESTAL_TOP_Y = 0;
  * median sprite is about a quarter of the width; `bun run build-shapes`
  * prints the bounding-box widths to check it. */
 export const VIEW_WIDTH = 7;
-/** Pedestal widths as fractions of VIEW_WIDTH. `large` is from the play
- * screenshots above. `small` and `medium` are from the animal game, unchecked. */
-export const PEDESTAL_WIDTH_RATIO = { small: 0.55, medium: 0.64, large: 0.9 };
+export const PEDESTAL_WIDTH_RATIO = { small: 0.55, medium: 0.64, large: 0.95 };
 export const PEDESTAL_HALF_WIDTHS = {
 	small: (PEDESTAL_WIDTH_RATIO.small * VIEW_WIDTH) / 2,
 	medium: (PEDESTAL_WIDTH_RATIO.medium * VIEW_WIDTH) / 2,
