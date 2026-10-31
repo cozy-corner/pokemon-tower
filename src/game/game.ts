@@ -12,7 +12,7 @@ import {
 export const SPAWN_TIMEOUT_S = 20;
 /** Below the pedestal's underside; a piece past it can never come back. */
 export const KILL_LINE_Y = PEDESTAL_THICKNESS + 5;
-const MAX_HOLD_X = VIEW_WIDTH / 2 - 1;
+const MAX_HOLD_X = VIEW_WIDTH / 2;
 export const ROTATE_STEP_DEG = 45;
 const TURNS = 360 / ROTATE_STEP_DEG;
 const angleOf = (turn: number) => (turn * ROTATE_STEP_DEG * Math.PI) / 180;
