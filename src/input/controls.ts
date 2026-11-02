@@ -1,6 +1,8 @@
 import { VIEW_WIDTH } from "../physics/world";
+import { VIEW_HEIGHT } from "../render/renderer";
 
 const KEY_STEP = VIEW_WIDTH / 40;
+const SCROLL_STEP = VIEW_HEIGHT / 40;
 
 export function createControls(
 	canvas: HTMLCanvasElement,
@@ -10,6 +12,7 @@ export function createControls(
 		onNudge(dx: number): void;
 		onRotate(): void;
 		onDrop(): void;
+		onScroll(dy: number): void;
 	},
 	keyTarget: Pick<Window, "addEventListener"> = window,
 ): void {
@@ -74,6 +77,12 @@ export function createControls(
 			case "Enter":
 			case "NumpadEnter":
 				if (!e.repeat) handlers.onDrop();
+				break;
+			case "KeyD":
+				handlers.onScroll(SCROLL_STEP);
+				break;
+			case "KeyU":
+				handlers.onScroll(-SCROLL_STEP);
 				break;
 			default:
 				return;

@@ -37,6 +37,7 @@ function setup() {
 		onNudge: vi.fn(),
 		onRotate: vi.fn(),
 		onDrop: vi.fn(),
+		onScroll: vi.fn(),
 	};
 	createControls(
 		canvas as unknown as HTMLCanvasElement,
@@ -164,6 +165,17 @@ describe("controls", () => {
 				expect(handlers.onDrop).toHaveBeenCalledTimes(1);
 			},
 		);
+
+		it.each([
+			["KeyD", 1],
+			["KeyU", -1],
+		])("scrolls on %s, including repeats", (k, sign) => {
+			const { win, handlers } = setup();
+			win.dispatch("keydown", key(k));
+			win.dispatch("keydown", key(k, { repeat: true }));
+			expect(handlers.onScroll).toHaveBeenCalledTimes(2);
+			expect(Math.sign(handlers.onScroll.mock.calls[0][0])).toBe(sign);
+		});
 
 		it("ignores the typed character, so Caps Lock and an IME do not matter", () => {
 			const { win, handlers } = setup();

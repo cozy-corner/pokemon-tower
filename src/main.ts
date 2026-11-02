@@ -89,6 +89,7 @@ const updateHud = () => {
 	el("best-height").textContent = best.height.toFixed(1);
 };
 
+const renderer = createRenderer(canvas, sprites, (name) => shapes[name].size);
 createControls(
 	canvas,
 	{ rotate: el("rotate"), drop: el("drop") },
@@ -101,10 +102,9 @@ createControls(
 			const img = game.held && sprites.get(game.held.id);
 			if (img && isReady(img)) game.drop();
 		},
+		onScroll: (dy) => renderer.scroll(dy),
 	},
 );
-
-const renderer = createRenderer(canvas, sprites, (name) => shapes[name].size);
 let last: number | null = null;
 let acc = 0;
 const frame = (now: number) => {

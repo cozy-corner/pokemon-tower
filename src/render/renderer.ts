@@ -14,6 +14,8 @@ export const isReady = (img: HTMLImageElement) =>
 
 export type Renderer = {
 	draw(pieces: readonly Piece[], held: HeldPiece | null): void;
+	/** Positive moves the view down, toward the pedestal. */
+	scroll(dy: number): void;
 };
 
 export const VIEW_HEIGHT = (VIEW_WIDTH * 16) / 9;
@@ -56,6 +58,11 @@ export function cameraTop(pieces: readonly { y: number }[]): number {
 	);
 }
 
+/** How far below the followed view the camera sits: never above it, never below the initial view. */
+export function clampScroll(offset: number, followedTop: number): number {
+	return Math.min(Math.max(offset, 0), INITIAL_CAMERA_TOP - followedTop);
+}
+
 export function createRenderer(
 	canvas: HTMLCanvasElement,
 	sprites: Map<string, HTMLImageElement>,
@@ -74,6 +81,8 @@ export function createRenderer(
 	};
 	resize();
 	new ResizeObserver(resize).observe(canvas);
+	let scrollOffset = 0;
+	let followedTop = INITIAL_CAMERA_TOP;
 
 	const drawPiece = (p: HeldPiece) => {
 		const img = sprites.get(p.id);
@@ -224,13 +233,19 @@ export function createRenderer(
 	};
 
 	return {
+		scroll(dy) {
+			// Clamp now, so scrolling past an end does not have to be undone.
+			scrollOffset = clampScroll(scrollOffset + dy, followedTop);
+		},
 		draw(pieces, held) {
 			ctx.imageSmoothingQuality = "high";
 			ctx.setTransform(1, 0, 0, 1, 0, 0);
 			ctx.fillStyle = SKY;
 			ctx.fillRect(0, 0, canvas.width, canvas.height);
 			const view = held ? [...pieces, held] : pieces;
-			const top = cameraTop(view);
+			followedTop = cameraTop(view);
+			scrollOffset = clampScroll(scrollOffset, followedTop);
+			const top = followedTop + scrollOffset;
 			ctx.setTransform(
 				scale,
 				0,
