@@ -105,8 +105,11 @@ createControls(
 			const held = game.held;
 			if (!held) return;
 			const into = game.transformsInto;
-			const img = sprites.get(into ?? held.id);
-			if (!img || !isReady(img)) return;
+			// The wave shows the held sprite first, so both must be loaded.
+			for (const name of [held.id, into ?? held.id]) {
+				const img = sprites.get(name);
+				if (!img || !isReady(img)) return;
+			}
 			game.drop();
 			if (!into) return;
 			renderer.transform(into, held.id);
