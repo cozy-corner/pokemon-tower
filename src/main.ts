@@ -60,6 +60,8 @@ const ensureSprite = (name: string) => {
 	img.src = `/sprites/${name}.svg`;
 	sprites.set(name, img);
 };
+// A transform is rolled at spawn, too late to fetch its sprite before the drop.
+for (const name of TRANSFORMERS) ensureSprite(name);
 
 const best = loadBest();
 let shown = "";
@@ -122,8 +124,6 @@ const frame = (now: number) => {
 	for (; acc >= STEP_S; acc -= STEP_S) game.step(STEP_S);
 	if (game.held) ensureSprite(game.held.id);
 	ensureSprite(game.upcoming);
-	const into = game.transformsInto;
-	if (into) ensureSprite(into);
 	updateHud();
 	renderer.draw(game.pieces(), game.held);
 	requestAnimationFrame(frame);

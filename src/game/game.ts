@@ -34,8 +34,7 @@ export type Game = {
 	readonly held: HeldPiece | null;
 	/** The pick after the held one, so its sprite can be fetched early. */
 	readonly upcoming: string;
-	/** What the held piece becomes when dropped, decided early so its sprite
-	 * can be fetched before the drop. */
+	/** What the held piece becomes when dropped. */
 	readonly transformsInto: string | null;
 	/** 1-based order of the held piece, shown as "5. EEVEE". */
 	readonly pieceNumber: number;
