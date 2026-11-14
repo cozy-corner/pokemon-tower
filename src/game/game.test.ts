@@ -241,13 +241,20 @@ describe("createGame", () => {
 		expect(new Set(world.pieces().map((p) => p.id)).size).toBe(2);
 	});
 
-	it("re-picks the upcoming piece when the held one became it", () => {
-		const { game, world } = setup({ rand: () => 0, transformers: ["b"] });
+	it("does not transform into the upcoming piece", () => {
+		const { game } = setup({ rand: () => 0, transformers: ["b", "c"] });
 		expect(game.upcoming).toBe("b");
-		expect(game.transformsInto).toBe("b");
+		expect(game.transformsInto).toBe("c");
+	});
+
+	it("re-picks the upcoming piece when the held one became it", () => {
+		const { game, world } = setup({ rand: () => 0, transformers: ["b", "c"] });
+		// A broken upcoming is re-picked without regard to the transform.
+		game.reportBroken("b");
+		expect(game.upcoming).toBe("c");
 		settle(game);
-		expect(world.pieces().map((p) => p.id)).toEqual(["b"]);
-		expect(game.held?.id).not.toBe("b");
+		expect(world.pieces().map((p) => p.id)).toEqual(["c"]);
+		expect(game.held?.id).not.toBe("c");
 	});
 
 	it("does not transform into a piece whose image is broken", () => {

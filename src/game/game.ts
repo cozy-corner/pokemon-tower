@@ -94,7 +94,8 @@ export function createGame({
 		return pickNext(names, skip, previous, rand);
 	};
 	const rollTransform = () => {
-		const skip = new Set([...excluded, ...broken, heldName]);
+		// Not upcoming either, whose prefetched sprite a re-pick would waste.
+		const skip = new Set([...excluded, ...broken, heldName, upcoming]);
 		for (const p of world.pieces()) skip.add(p.id);
 		const choices = transformers.filter((n) => !skip.has(n));
 		// No roll without a choice, so rand is not consumed for nothing.
