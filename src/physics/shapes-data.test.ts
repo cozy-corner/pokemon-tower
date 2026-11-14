@@ -4,6 +4,7 @@ import exclusions from "../../data/exclusions.json";
 import heights from "../../data/heights.json";
 import names from "../../data/names.json";
 import shapes from "../../public/shapes.json";
+import { TRANSFORMERS } from "../game/game";
 import { spriteWorldSize } from "../geometry/sprite-size";
 import type { OutlineResult, Shape, Vec } from "../geometry/types";
 
@@ -80,6 +81,11 @@ describe("public/shapes.json", () => {
 		expect(all.map(([name]) => name).sort()).toEqual(
 			names.filter((n) => !excluded.has(n)).sort(),
 		);
+	});
+
+	// A missing one would only crash on the rare transform roll.
+	it("has every transformer", () => {
+		expect(TRANSFORMERS.filter((n) => !(n in shapes))).toEqual([]);
 	});
 
 	it("only has polygons Planck keeps exactly as given", () => {
