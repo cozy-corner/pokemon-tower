@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { Piece } from "../physics/world";
-import { cameraTop, clampScroll, INITIAL_CAMERA_TOP } from "./renderer";
+import {
+	cameraTop,
+	clampScroll,
+	INITIAL_CAMERA_TOP,
+	TRANSFORM_S,
+	transformFrame,
+} from "./renderer";
 
 const piece = (y: number, asleep = true): Piece => ({
 	id: `p${y}`,
@@ -59,5 +65,18 @@ describe("clampScroll", () => {
 
 	it("has no room while the tower is short", () => {
 		expect(clampScroll(5, INITIAL_CAMERA_TOP)).toBe(0);
+	});
+});
+
+describe("transformFrame", () => {
+	it("waves the old sprite up to the midpoint, then settles on the new one", () => {
+		expect(transformFrame(0)).toEqual({ showFrom: true, amplitude: 0 });
+		expect(transformFrame(TRANSFORM_S * 0.25).showFrom).toBe(true);
+		expect(transformFrame(TRANSFORM_S * 0.5).amplitude).toBeCloseTo(1);
+		expect(transformFrame(TRANSFORM_S * 0.75).showFrom).toBe(false);
+		expect(transformFrame(TRANSFORM_S)).toEqual({
+			showFrom: false,
+			amplitude: 0,
+		});
 	});
 });

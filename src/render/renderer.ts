@@ -16,7 +16,24 @@ export type Renderer = {
 	draw(pieces: readonly Piece[], held: HeldPiece | null): void;
 	/** Positive moves the view down, toward the pedestal. */
 	scroll(dy: number): void;
+	/** Plays the wave on piece `id`, which shows as `from` until the midpoint. */
+	transform(id: string, from: string): void;
 };
+
+export const TRANSFORM_S = 0.6;
+/** Peak sideways shift of a strip, as a fraction of the sprite width. */
+const WAVE_AMPLITUDE = 0.12;
+const WAVE_CYCLES = 3;
+const WAVE_STRIPS = 32;
+
+/** The wave grows on the old sprite, then settles on the new one. */
+export function transformFrame(elapsedS: number): {
+	showFrom: boolean;
+	amplitude: number;
+} {
+	const t = Math.min(Math.max(elapsedS / TRANSFORM_S, 0), 1);
+	return { showFrom: t < 0.5, amplitude: 1 - Math.abs(2 * t - 1) };
+}
 
 export const VIEW_HEIGHT = (VIEW_WIDTH * 16) / 9;
 /** Room under the pedestal for the buttons, which sit in the page, not the canvas. */
@@ -83,16 +100,53 @@ export function createRenderer(
 	new ResizeObserver(resize).observe(canvas);
 	let scrollOffset = 0;
 	let followedTop = INITIAL_CAMERA_TOP;
+	const transforms = new Map<string, { from: string; start: number }>();
 
 	const drawPiece = (p: HeldPiece) => {
-		const img = sprites.get(p.id);
+		let id = p.id;
+		let amplitude = 0;
+		let phase = 0;
+		const tf = transforms.get(p.id);
+		if (tf) {
+			const elapsed = (performance.now() - tf.start) / 1000;
+			if (elapsed >= TRANSFORM_S) transforms.delete(p.id);
+			const frame = transformFrame(elapsed);
+			if (frame.showFrom) id = tf.from;
+			amplitude = frame.amplitude;
+			phase = (elapsed / TRANSFORM_S) * 4 * Math.PI;
+		}
+		const img = sprites.get(id);
 		if (!img || !isReady(img)) return;
 		ctx.save();
 		ctx.translate(p.x, p.y);
 		ctx.rotate(p.angle);
 		// Shapes put the origin at the SVG center, so draw around it.
-		const { w, h } = sizeOf(p.id);
-		ctx.drawImage(img, -w / 2, -h / 2, w, h);
+		const { w, h } = sizeOf(id);
+		if (amplitude === 0) {
+			ctx.drawImage(img, -w / 2, -h / 2, w, h);
+		} else {
+			// Horizontal strips, each shifted sideways along a sine.
+			const sh = img.naturalHeight / WAVE_STRIPS;
+			for (let i = 0; i < WAVE_STRIPS; i++) {
+				const shift =
+					amplitude *
+					WAVE_AMPLITUDE *
+					w *
+					Math.sin((i / WAVE_STRIPS) * WAVE_CYCLES * 2 * Math.PI + phase);
+				ctx.drawImage(
+					img,
+					0,
+					i * sh,
+					img.naturalWidth,
+					sh,
+					-w / 2 + shift,
+					-h / 2 + (i * h) / WAVE_STRIPS,
+					w,
+					// A hair taller than a strip so seams do not show.
+					h / WAVE_STRIPS + 0.01,
+				);
+			}
+		}
 		ctx.restore();
 	};
 
@@ -236,6 +290,9 @@ export function createRenderer(
 		scroll(dy) {
 			// Clamp now, so scrolling past an end does not have to be undone.
 			scrollOffset = clampScroll(scrollOffset + dy, followedTop);
+		},
+		transform(id, from) {
+			transforms.set(id, { from, start: performance.now() });
 		},
 		draw(pieces, held) {
 			ctx.imageSmoothingQuality = "high";

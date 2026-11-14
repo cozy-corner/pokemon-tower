@@ -106,7 +106,9 @@ createControls(
 			const img = sprites.get(into ?? held.id);
 			if (!img || !isReady(img)) return;
 			game.drop();
-			if (into) el("piece-name").textContent = into.replaceAll("-", " ");
+			if (!into) return;
+			renderer.transform(into, held.id);
+			el("piece-name").textContent = into.replaceAll("-", " ");
 		},
 		onScroll: (dy) => renderer.scroll(dy),
 	},
