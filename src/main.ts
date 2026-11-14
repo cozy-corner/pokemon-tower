@@ -1,7 +1,7 @@
 import exclusions from "../data/exclusions.json";
 import names from "../data/names.json";
 import { startBgmOnFirstGesture } from "./audio/bgm";
-import { createGame } from "./game/game";
+import { createGame, TRANSFORMERS } from "./game/game";
 import type { Shape } from "./geometry/types";
 import { createControls } from "./input/controls";
 import { createWorld } from "./physics/world";
@@ -47,6 +47,7 @@ const game = createGame({
 	excluded: new Set(exclusions),
 	polygonsOf: (name) => shapes[name].polygons,
 	rand: Math.random,
+	transformers: TRANSFORMERS,
 });
 
 const ensureSprite = (name: string) => {
@@ -99,8 +100,13 @@ createControls(
 		onRotate: () => game.rotate(),
 		onDrop: () => {
 			// An invisible piece would stay on the tower.
-			const img = game.held && sprites.get(game.held.id);
-			if (img && isReady(img)) game.drop();
+			const held = game.held;
+			if (!held) return;
+			const into = game.transformsInto;
+			const img = sprites.get(into ?? held.id);
+			if (!img || !isReady(img)) return;
+			game.drop();
+			if (into) el("piece-name").textContent = into.replaceAll("-", " ");
 		},
 		onScroll: (dy) => renderer.scroll(dy),
 	},
@@ -114,6 +120,8 @@ const frame = (now: number) => {
 	for (; acc >= STEP_S; acc -= STEP_S) game.step(STEP_S);
 	if (game.held) ensureSprite(game.held.id);
 	ensureSprite(game.upcoming);
+	const into = game.transformsInto;
+	if (into) ensureSprite(into);
 	updateHud();
 	renderer.draw(game.pieces(), game.held);
 	requestAnimationFrame(frame);

@@ -16,6 +16,9 @@ const MAX_HOLD_X = VIEW_WIDTH / 2;
 export const ROTATE_STEP_DEG = 45;
 const TURNS = 360 / ROTATE_STEP_DEG;
 const angleOf = (turn: number) => (turn * ROTATE_STEP_DEG * Math.PI) / 180;
+/** Pokémon that can take another's form; a dropped piece may become one. */
+export const TRANSFORMERS = ["ditto", "mew", "zorua"];
+export const TRANSFORM_CHANCE = 0.03;
 
 export type HeldPiece = {
 	readonly id: string;
@@ -31,6 +34,9 @@ export type Game = {
 	readonly held: HeldPiece | null;
 	/** The pick after the held one, so its sprite can be fetched early. */
 	readonly upcoming: string;
+	/** What the held piece becomes when dropped, decided early so its sprite
+	 * can be fetched before the drop. */
+	readonly transformsInto: string | null;
 	/** 1-based order of the held piece, shown as "5. EEVEE". */
 	readonly pieceNumber: number;
 	readonly stackedCount: number;
@@ -51,6 +57,7 @@ export type GameDeps = {
 	excluded: Set<string>;
 	polygonsOf(name: string): Vec[][];
 	rand: () => number;
+	transformers?: string[];
 };
 
 export function pickNext(
@@ -70,6 +77,7 @@ export function createGame({
 	excluded,
 	polygonsOf,
 	rand,
+	transformers = [],
 }: GameDeps): Game {
 	const broken = new Set<string>();
 	let state: GameState = "HOLDING";
@@ -86,8 +94,17 @@ export function createGame({
 		for (const p of world.pieces()) skip.add(p.id);
 		return pickNext(names, skip, previous, rand);
 	};
+	const rollTransform = () => {
+		const skip = new Set([...excluded, ...broken, heldName]);
+		for (const p of world.pieces()) skip.add(p.id);
+		const choices = transformers.filter((n) => !skip.has(n));
+		// No roll without a choice, so rand is not consumed for nothing.
+		if (choices.length === 0 || rand() >= TRANSFORM_CHANCE) return null;
+		return choices[Math.floor(rand() * choices.length)];
+	};
 	let heldName = pick(null);
 	let upcoming = pick(heldName);
+	let transformsInto = rollTransform();
 
 	const refreshStats = () => {
 		stackedCount = world.pieces().length;
@@ -97,6 +114,7 @@ export function createGame({
 	const advance = () => {
 		heldName = upcoming;
 		upcoming = pick(heldName);
+		transformsInto = rollTransform();
 	};
 
 	const spawn = () => {
@@ -121,6 +139,9 @@ export function createGame({
 		},
 		get upcoming() {
 			return upcoming;
+		},
+		get transformsInto() {
+			return state === "HOLDING" ? transformsInto : null;
 		},
 		get pieceNumber() {
 			return dropped + 1;
@@ -158,13 +179,17 @@ export function createGame({
 		},
 		drop() {
 			if (state !== "HOLDING") return;
-			world.addPiece(heldName, polygonsOf(heldName), x, angleOf(turn));
+			const id = transformsInto ?? heldName;
+			world.addPiece(id, polygonsOf(id), x, angleOf(turn));
+			// A world id must be unique, so the next pick cannot be the new form.
+			if (upcoming === id) upcoming = pick(heldName);
 			dropped++;
 			settleElapsed = 0;
 			state = "SETTLING";
 		},
 		reportBroken(name) {
 			broken.add(name);
+			if (transformsInto === name) transformsInto = null;
 			if (state === "HOLDING" && heldName === name) {
 				advance();
 			} else if (upcoming === name) {

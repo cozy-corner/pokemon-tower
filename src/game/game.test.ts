@@ -31,6 +31,7 @@ const setup = (
 		excluded?: string[];
 		polygons?: Vec[][];
 		rand?: () => number;
+		transformers?: string[];
 	} = {},
 ) => {
 	const world = opts.world ?? createWorld();
@@ -40,6 +41,7 @@ const setup = (
 		excluded: new Set(opts.excluded ?? []),
 		polygonsOf: () => opts.polygons ?? [box(0.5, 0.5)],
 		rand: opts.rand ?? seq(0, 0.3, 0.6, 0.9),
+		transformers: opts.transformers,
 	});
 	return { world, game };
 };
@@ -212,5 +214,45 @@ describe("createGame", () => {
 			expect(game.held?.id).not.toBe(first);
 			settle(game);
 		}
+	});
+
+	it("drops the piece as a transformer when the roll is under the chance", () => {
+		const { game, world } = setup({ rand: () => 0, transformers: ["y", "z"] });
+		expect(game.transformsInto).toBe("y");
+		const held = game.held?.id;
+		game.drop();
+		expect(world.pieces().map((p) => p.id)).toEqual(["y"]);
+		expect(held).not.toBe("y");
+	});
+
+	it("keeps the piece when the roll is at or over the chance", () => {
+		const { game, world } = setup({ rand: () => 0.5, transformers: ["y"] });
+		expect(game.transformsInto).toBeNull();
+		const held = game.held?.id;
+		game.drop();
+		expect(world.pieces().map((p) => p.id)).toEqual([held]);
+	});
+
+	it("does not transform into a piece already on the tower", () => {
+		const { game, world } = setup({ rand: () => 0, transformers: ["y"] });
+		settle(game);
+		expect(game.transformsInto).toBeNull();
+		settle(game);
+		expect(new Set(world.pieces().map((p) => p.id)).size).toBe(2);
+	});
+
+	it("re-picks the upcoming piece when the held one became it", () => {
+		const { game, world } = setup({ rand: () => 0, transformers: ["b"] });
+		expect(game.upcoming).toBe("b");
+		expect(game.transformsInto).toBe("b");
+		settle(game);
+		expect(world.pieces().map((p) => p.id)).toEqual(["b"]);
+		expect(game.held?.id).not.toBe("b");
+	});
+
+	it("does not transform into a piece whose image is broken", () => {
+		const { game } = setup({ rand: () => 0, transformers: ["y"] });
+		game.reportBroken("y");
+		expect(game.transformsInto).toBeNull();
 	});
 });
