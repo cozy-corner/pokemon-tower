@@ -101,6 +101,26 @@ export function createRenderer(
 	let scrollOffset = 0;
 	let followedTop = INITIAL_CAMERA_TOP;
 	const transforms = new Map<string, { from: string; start: number }>();
+	const rasters = new Map<string, HTMLCanvasElement>();
+	// Strips cut from the SVG itself come out garbled, so cut them from a bitmap.
+	const rasterOf = (
+		id: string,
+		img: HTMLImageElement,
+		w: number,
+		h: number,
+	) => {
+		const pw = Math.ceil(w * scale);
+		const ph = Math.ceil(h * scale);
+		let raster = rasters.get(id);
+		if (raster?.width !== pw || raster.height !== ph) {
+			raster = document.createElement("canvas");
+			raster.width = pw;
+			raster.height = ph;
+			raster.getContext("2d")?.drawImage(img, 0, 0, pw, ph);
+			rasters.set(id, raster);
+		}
+		return raster;
+	};
 
 	const drawPiece = (p: HeldPiece) => {
 		let id = p.id;
@@ -109,7 +129,11 @@ export function createRenderer(
 		const tf = transforms.get(p.id);
 		if (tf) {
 			const elapsed = (performance.now() - tf.start) / 1000;
-			if (elapsed >= TRANSFORM_S) transforms.delete(p.id);
+			if (elapsed >= TRANSFORM_S) {
+				transforms.delete(p.id);
+				rasters.delete(p.id);
+				rasters.delete(tf.from);
+			}
 			const frame = transformFrame(elapsed);
 			if (frame.showFrom) id = tf.from;
 			amplitude = frame.amplitude;
@@ -126,7 +150,8 @@ export function createRenderer(
 			ctx.drawImage(img, -w / 2, -h / 2, w, h);
 		} else {
 			// Horizontal strips, each shifted sideways along a sine.
-			const sh = img.naturalHeight / WAVE_STRIPS;
+			const raster = rasterOf(id, img, w, h);
+			const sh = raster.height / WAVE_STRIPS;
 			for (let i = 0; i < WAVE_STRIPS; i++) {
 				const shift =
 					amplitude *
@@ -134,10 +159,10 @@ export function createRenderer(
 					w *
 					Math.sin((i / WAVE_STRIPS) * WAVE_CYCLES * 2 * Math.PI + phase);
 				ctx.drawImage(
-					img,
+					raster,
 					0,
 					i * sh,
-					img.naturalWidth,
+					raster.width,
 					sh,
 					-w / 2 + shift,
 					-h / 2 + (i * h) / WAVE_STRIPS,
