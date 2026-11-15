@@ -17,9 +17,14 @@ export function pickTrack(
 }
 
 /** Browsers block audio until a user gesture, so playback starts on the first one that is allowed to play. */
-export function startBgmOnFirstGesture(rand: () => number): void {
+export function startBgmOnFirstGesture(
+	rand: () => number,
+	muted: boolean,
+): { setMuted(muted: boolean): void } {
 	const audio = new Audio();
 	audio.volume = 0.4;
+	// `muted`, not `volume`: iOS Safari ignores volume set from script.
+	audio.muted = muted;
 	let current: string | undefined;
 	let failures = 0;
 	const next = () => {
@@ -46,4 +51,9 @@ export function startBgmOnFirstGesture(rand: () => number): void {
 		);
 	};
 	for (const e of events) window.addEventListener(e, start);
+	return {
+		setMuted: (m) => {
+			audio.muted = m;
+		},
+	};
 }

@@ -132,4 +132,4 @@ const frame = (now: number) => {
 	requestAnimationFrame(frame);
 };
 requestAnimationFrame(frame);
-startBgmOnFirstGesture(Math.random);
+startBgmOnFirstGesture(Math.random, false);
