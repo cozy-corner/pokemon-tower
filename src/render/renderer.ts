@@ -43,6 +43,7 @@ export const INVISIBLES = new Set([
 	"kecleon",
 	"duskull",
 	"vaporeon",
+	"mew",
 ]);
 /** Not 0, so the player can still aim. */
 export const INVISIBLE_ALPHA = 0.2;
