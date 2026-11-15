@@ -150,6 +150,8 @@ let muted = loadMuted();
 const bgm = startBgmOnFirstGesture(Math.random, muted);
 const muteButton = el("mute");
 muteButton.setAttribute("aria-pressed", String(muted));
+// A clicked button keeps focus, and Space/Enter on it would then toggle mute instead of rotating/dropping.
+muteButton.addEventListener("pointerdown", (e) => e.preventDefault());
 muteButton.addEventListener("click", () => {
 	muted = !muted;
 	bgm.setMuted(muted);
