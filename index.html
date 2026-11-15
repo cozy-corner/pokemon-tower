@@ -25,6 +25,15 @@
         color: #fff; font: 800 16px system-ui, sans-serif; letter-spacing: 0.04em;
         text-transform: uppercase; pointer-events: none; user-select: none; -webkit-user-select: none;
       }
+      #mute {
+        position: absolute; top: 14%; right: 0; padding: 2px 10px 2px 14px; border: 0;
+        border-radius: 999px 0 0 999px; background: rgba(20, 90, 140, 0.45); color: #fff;
+        display: grid; place-items: center;
+        user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+      #mute svg { width: 24px; height: 24px; }
+      #mute[aria-pressed="true"] .on, #mute[aria-pressed="false"] .off { display: none; }
       .best { font-size: 14px; margin-top: 4px; opacity: 0.75; }
       .end { text-align: right; }
       .stat.end { justify-content: flex-end; }
@@ -59,6 +68,18 @@
         </div>
       </div>
       <div id="label"><span id="piece-no">1</span>. <span id="piece-name"></span></div>
+      <button id="mute" type="button" aria-label="Mute" aria-pressed="false">
+        <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" />
+          <path d="M16.5 8.5a5 5 0 0 1 0 7" />
+          <path d="M19 6a8.5 8.5 0 0 1 0 12" />
+        </svg>
+        <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" />
+          <path d="M16 9l5 6" />
+          <path d="M21 9l-5 6" />
+        </svg>
+      </button>
       <div id="bar">
         <button id="rotate" type="button" aria-label="Rotate">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

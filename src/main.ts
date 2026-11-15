@@ -13,6 +13,7 @@ const STEP_S = 1 / 60;
 // After a long stall (hidden tab) drop the backlog instead of fast-forwarding.
 const MAX_STEPS_PER_FRAME = 5;
 const RECORD_KEY = "pokemon-tower.best";
+const MUTE_KEY = "pokemon-tower.muted";
 
 const el = (id: string) => {
 	const node = document.getElementById(id);
@@ -36,6 +37,19 @@ const loadBest = (): Best => {
 const saveBest = (best: Best) => {
 	try {
 		localStorage.setItem(RECORD_KEY, JSON.stringify(best));
+	} catch {}
+};
+
+const loadMuted = (): boolean => {
+	try {
+		return localStorage.getItem(MUTE_KEY) === "1";
+	} catch {
+		return false;
+	}
+};
+const saveMuted = (muted: boolean) => {
+	try {
+		localStorage.setItem(MUTE_KEY, muted ? "1" : "0");
 	} catch {}
 };
 
@@ -132,4 +146,13 @@ const frame = (now: number) => {
 	requestAnimationFrame(frame);
 };
 requestAnimationFrame(frame);
-startBgmOnFirstGesture(Math.random, false);
+let muted = loadMuted();
+const bgm = startBgmOnFirstGesture(Math.random, muted);
+const muteButton = el("mute");
+muteButton.setAttribute("aria-pressed", String(muted));
+muteButton.addEventListener("click", () => {
+	muted = !muted;
+	bgm.setMuted(muted);
+	muteButton.setAttribute("aria-pressed", String(muted));
+	saveMuted(muted);
+});
