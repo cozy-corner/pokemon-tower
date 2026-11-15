@@ -62,10 +62,9 @@ export type GameDeps = {
 export function pickNext(
 	names: string[],
 	excluded: Set<string>,
-	previous: string | null,
 	rand: () => number,
 ): string {
-	const choices = names.filter((n) => !excluded.has(n) && n !== previous);
+	const choices = names.filter((n) => !excluded.has(n));
 	if (choices.length === 0) throw new Error("no piece left to pick");
 	return choices[Math.floor(rand() * choices.length)];
 }
@@ -87,23 +86,21 @@ export function createGame({
 	let x = 0;
 	let turn = 0;
 
-	// A world id must be unique, so names already on the tower are skipped.
-	const pick = (previous: string | null) => {
-		const skip = new Set([...excluded, ...broken]);
-		for (const p of world.pieces()) skip.add(p.id);
-		return pickNext(names, skip, previous, rand);
-	};
+	// Held or dropped; a species appears once per play, falls included.
+	const seen = new Set<string>();
+	const pick = () =>
+		pickNext(names, new Set([...excluded, ...broken, ...seen]), rand);
 	const rollTransform = () => {
 		// Not upcoming either, whose prefetched sprite a re-pick would waste.
-		const skip = new Set([...excluded, ...broken, heldName, upcoming]);
-		for (const p of world.pieces()) skip.add(p.id);
+		const skip = new Set([...excluded, ...broken, ...seen, upcoming]);
 		const choices = transformers.filter((n) => !skip.has(n));
 		// No roll without a choice, so rand is not consumed for nothing.
 		if (choices.length === 0 || rand() >= TRANSFORM_CHANCE) return null;
 		return choices[Math.floor(rand() * choices.length)];
 	};
-	let heldName = pick(null);
-	let upcoming = pick(heldName);
+	let heldName = pick();
+	seen.add(heldName);
+	let upcoming = pick();
 	let transformsInto = rollTransform();
 
 	const refreshStats = () => {
@@ -113,7 +110,8 @@ export function createGame({
 
 	const advance = () => {
 		heldName = upcoming;
-		upcoming = pick(heldName);
+		seen.add(heldName);
+		upcoming = pick();
 		transformsInto = rollTransform();
 	};
 
@@ -181,8 +179,9 @@ export function createGame({
 			if (state !== "HOLDING") return;
 			const id = transformsInto ?? heldName;
 			world.addPiece(id, polygonsOf(id), x, angleOf(turn));
+			seen.add(id);
 			// A world id must be unique, so the next pick cannot be the new form.
-			if (upcoming === id) upcoming = pick(heldName);
+			if (upcoming === id) upcoming = pick();
 			dropped++;
 			settleElapsed = 0;
 			state = "SETTLING";
@@ -193,7 +192,7 @@ export function createGame({
 			if (state === "HOLDING" && heldName === name) {
 				advance();
 			} else if (upcoming === name) {
-				upcoming = pick(heldName);
+				upcoming = pick();
 			}
 		},
 	};

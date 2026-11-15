@@ -55,11 +55,11 @@ const settle = (game: ReturnType<typeof setup>["game"]) => {
 };
 
 describe("pickNext", () => {
-	it("skips excluded names and the previous one", () => {
+	it("skips excluded names", () => {
 		const excluded = new Set(["a", "b"]);
 		for (const r of [0, 0.34, 0.67, 0.99]) {
-			const name = pickNext(NAMES, excluded, "c", () => r);
-			expect(name).not.toMatch(/[abc]/);
+			const name = pickNext(NAMES, excluded, () => r);
+			expect(name).not.toMatch(/[ab]/);
 		}
 	});
 });
@@ -116,6 +116,36 @@ describe("createGame", () => {
 		}
 		expect(seen).not.toContain("b");
 		expect(new Set(seen).size).toBe(3);
+	});
+
+	it("never offers a species twice in one play, even after it falls off", () => {
+		// The polygon sits far right of its origin, so it tips off the pedestal.
+		const { game, world } = setup({ polygons: [box(1, 1, 3)], rand: () => 0 });
+		const seen: string[] = [];
+		for (let i = 0; i < 4; i++) {
+			seen.push(game.held?.id ?? "");
+			game.move(100);
+			settle(game);
+		}
+		expect(world.pieces()).toHaveLength(0);
+		expect(new Set(seen).size).toBe(4);
+	});
+
+	it("does not offer a species the held one transformed into, even after it falls off", () => {
+		const { game, world } = setup({
+			polygons: [box(1, 1, 3)],
+			rand: () => 0,
+			transformers: ["c"],
+		});
+		expect(game.transformsInto).toBe("c");
+		for (let i = 0; i < 6; i++) {
+			game.move(100);
+			settle(game);
+			expect(world.pieces()).toHaveLength(0);
+			expect(game.held?.id).not.toBe("c");
+			expect(game.upcoming).not.toBe("c");
+			expect(game.transformsInto).not.toBe("c");
+		}
 	});
 
 	it("waits for every piece to sleep before the next one appears (c)", () => {
