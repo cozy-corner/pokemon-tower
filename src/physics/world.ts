@@ -54,6 +54,8 @@ export type Piece = {
 	readonly y: number;
 	readonly angle: number;
 	readonly asleep: boolean;
+	/** Has touched the pedestal or another piece at least once. */
+	readonly landed: boolean;
 };
 
 export type World = {
@@ -73,6 +75,8 @@ export type WorldOptions = {
 };
 
 type Entries = Map<string, { piece: Piece; body: Body }>;
+// Weak, so a removed body does not linger.
+const landedBodies = new WeakSet<Body>();
 
 function addPiece(
 	world: PlanckWorld,
@@ -114,6 +118,9 @@ function addPiece(
 		get asleep() {
 			return !body.isAwake();
 		},
+		get landed() {
+			return landedBodies.has(body);
+		},
 	};
 	entries.set(id, { piece, body });
 	return piece;
@@ -133,6 +140,10 @@ export function createWorld({
 		),
 		friction: FRICTION,
 		restitution: RESTITUTION,
+	});
+	world.on("begin-contact", (contact) => {
+		landedBodies.add(contact.getFixtureA().getBody());
+		landedBodies.add(contact.getFixtureB().getBody());
 	});
 
 	const entries: Entries = new Map();

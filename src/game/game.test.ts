@@ -149,7 +149,14 @@ describe("createGame", () => {
 	});
 
 	it("spawns after the timeout even if something never sleeps (c)", () => {
-		const awake: Piece = { id: "a", x: 0, y: 0, angle: 0, asleep: false };
+		const awake: Piece = {
+			id: "a",
+			x: 0,
+			y: 0,
+			angle: 0,
+			asleep: false,
+			landed: false,
+		};
 		const stub: World = {
 			addPiece: () => awake,
 			step: () => {},

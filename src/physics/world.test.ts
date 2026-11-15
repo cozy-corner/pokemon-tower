@@ -131,6 +131,24 @@ describe("createWorld", () => {
 		expect(world.highestPoint()).toBe(PEDESTAL_TOP_Y);
 	});
 
+	it("marks a piece landed once it touches the pedestal", () => {
+		const world = createWorld();
+		const piece = world.addPiece("a", [box(0.5, 0.5)], 0, 0);
+		expect(piece.landed).toBe(false);
+		run(world, SETTLE_S, () => piece.landed);
+		expect(piece.landed).toBe(true);
+	});
+
+	it("marks a piece landed when it lands on another piece", () => {
+		const world = createWorld();
+		const below = world.addPiece("a", [box(0.5, 0.5)], 0, 0);
+		run(world, SETTLE_S, () => below.asleep);
+		const above = world.addPiece("b", [box(0.5, 0.5)], 0, 0);
+		expect(above.landed).toBe(false);
+		run(world, SETTLE_S, () => above.landed);
+		expect(above.landed).toBe(true);
+	});
+
 	it("removes pieces and rejects duplicate ids", () => {
 		const world = createWorld();
 		const a = world.addPiece("a", [box(0.5, 0.5)], 0, 0);

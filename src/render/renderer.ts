@@ -35,6 +35,24 @@ export function transformFrame(elapsedS: number): {
 	return { showFrom: t < 0.5, amplitude: 1 - Math.abs(2 * t - 1) };
 }
 
+/** Pokémon the official Pokédex says can turn clear or vanish; they show faint until they land. */
+export const INVISIBLES = new Set([
+	"dragapult",
+	"latias",
+	"kecleon",
+	"duskull",
+]);
+/** Not 0, so the player can still aim. */
+export const INVISIBLE_ALPHA = 0.2;
+export const REAPPEAR_S = 1;
+
+/** `sinceLandedS` is null while the piece has not landed yet. */
+export function invisibleAlpha(sinceLandedS: number | null): number {
+	if (sinceLandedS === null) return INVISIBLE_ALPHA;
+	const t = Math.min(Math.max(sinceLandedS / REAPPEAR_S, 0), 1);
+	return INVISIBLE_ALPHA + (1 - INVISIBLE_ALPHA) * t;
+}
+
 export const VIEW_HEIGHT = (VIEW_WIDTH * 16) / 9;
 /** Room under the pedestal for the buttons, which sit in the page, not the canvas. */
 const BUTTON_BAND = 0.18 * VIEW_HEIGHT;
@@ -101,6 +119,7 @@ export function createRenderer(
 	let scrollOffset = 0;
 	let followedTop = INITIAL_CAMERA_TOP;
 	const transforms = new Map<string, { from: string; start: number }>();
+	const landings = new Map<string, number>();
 	const rasters = new Map<string, HTMLCanvasElement>();
 	// Strips cut from the SVG itself come out garbled, so cut them from a bitmap.
 	const rasterOf = (
@@ -122,7 +141,7 @@ export function createRenderer(
 		return raster;
 	};
 
-	const drawPiece = (p: HeldPiece) => {
+	const drawPiece = (p: HeldPiece, alpha = 1) => {
 		let id = p.id;
 		let amplitude = 0;
 		let phase = 0;
@@ -142,6 +161,7 @@ export function createRenderer(
 		const img = sprites.get(id);
 		if (!img || !isReady(img)) return;
 		ctx.save();
+		ctx.globalAlpha = alpha;
 		ctx.translate(p.x, p.y);
 		ctx.rotate(p.angle);
 		// Shapes put the origin at the SVG center, so draw around it.
@@ -344,8 +364,24 @@ export function createRenderer(
 				);
 			}
 			drawPedestal();
-			for (const p of pieces) drawPiece(p);
-			if (held) drawPiece(held);
+			const now = performance.now();
+			// A removed piece may be picked again, and must start faint then.
+			for (const id of landings.keys()) {
+				if (!pieces.some((p) => p.id === id)) landings.delete(id);
+			}
+			for (const p of pieces) {
+				if (!INVISIBLES.has(p.id)) {
+					drawPiece(p);
+					continue;
+				}
+				if (p.landed && !landings.has(p.id)) landings.set(p.id, now);
+				const since = landings.get(p.id);
+				drawPiece(
+					p,
+					invisibleAlpha(since === undefined ? null : (now - since) / 1000),
+				);
+			}
+			if (held) drawPiece(held, INVISIBLES.has(held.id) ? INVISIBLE_ALPHA : 1);
 		},
 	};
 }

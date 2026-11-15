@@ -4,6 +4,9 @@ import {
 	cameraTop,
 	clampScroll,
 	INITIAL_CAMERA_TOP,
+	INVISIBLE_ALPHA,
+	invisibleAlpha,
+	REAPPEAR_S,
 	TRANSFORM_S,
 	transformFrame,
 } from "./renderer";
@@ -14,6 +17,7 @@ const piece = (y: number, asleep = true): Piece => ({
 	y,
 	angle: 0,
 	asleep,
+	landed: true,
 });
 
 describe("cameraTop", () => {
@@ -78,5 +82,27 @@ describe("transformFrame", () => {
 			showFrom: false,
 			amplitude: 0,
 		});
+	});
+});
+
+describe("invisibleAlpha", () => {
+	it("stays faint until the piece lands", () => {
+		expect(invisibleAlpha(null)).toBe(INVISIBLE_ALPHA);
+	});
+
+	it("never goes fully clear", () => {
+		expect(INVISIBLE_ALPHA).toBeGreaterThan(0);
+	});
+
+	it("comes back gradually after landing", () => {
+		const half = invisibleAlpha(REAPPEAR_S / 2);
+		expect(half).toBeGreaterThan(INVISIBLE_ALPHA);
+		expect(half).toBeLessThan(1);
+		expect(invisibleAlpha(0)).toBe(INVISIBLE_ALPHA);
+	});
+
+	it("is fully opaque once the fade is over", () => {
+		expect(invisibleAlpha(REAPPEAR_S)).toBe(1);
+		expect(invisibleAlpha(REAPPEAR_S * 3)).toBe(1);
 	});
 });
