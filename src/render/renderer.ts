@@ -35,10 +35,11 @@ export function transformFrame(elapsedS: number): {
 	return { showFrom: t < 0.5, amplitude: 1 - Math.abs(2 * t - 1) };
 }
 
-/** Pokémon the official Pokédex says can turn clear or vanish; they show faint until they land. */
+/** Pokémon that can turn clear or vanish; they show faint until they land. */
 export const INVISIBLES = new Set([
 	"dragapult",
 	"latias",
+	"latios",
 	"kecleon",
 	"duskull",
 	"vaporeon",
